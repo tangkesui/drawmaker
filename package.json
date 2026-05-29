@@ -17,7 +17,9 @@
     "@tauri-apps/plugin-dialog": "^2.7.1",
     "@xyflow/react": "^12.10.2",
     "dagre": "^0.8.5",
+    "html-to-image": "^1.11.13",
     "immer": "^11.1.8",
+    "pdf-lib": "^1.17.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "zustand": "^5.0.14"

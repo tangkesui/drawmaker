@@ -25,3 +25,20 @@ export async function loadDocument(path: string): Promise<DmDocument> {
 export async function saveDocument(path: string, doc: DmDocument): Promise<void> {
   await invoke("write_file", { path, contents: serializeDocument(doc) });
 }
+
+/** 导出用：按扩展名弹 save 面板。 */
+export async function exportSaveDialog(suggestedName: string, ext: string): Promise<string | null> {
+  const result = await save({
+    defaultPath: suggestedName,
+    filters: [{ name: ext.toUpperCase(), extensions: [ext] }],
+  });
+  return result ?? null;
+}
+
+export async function writeText(path: string, text: string): Promise<void> {
+  await invoke("write_file", { path, contents: text });
+}
+
+export async function writeBytes(path: string, bytes: Uint8Array): Promise<void> {
+  await invoke("write_file_bytes", { path, contents: Array.from(bytes) });
+}

@@ -12,6 +12,7 @@ import {
 import { redo, undo } from "../core/history";
 import { deleteNodes } from "../core/operations";
 import { useEditorStore } from "../core/store";
+import { exportPdf, exportPng, exportSvg } from "./exportService";
 import { showError } from "./notify";
 
 /** 把异步 action 包成 MenuItem 的 (id)=>void 回调，错误走原生对话框。 */
@@ -54,6 +55,15 @@ async function buildMenu(): Promise<Menu> {
       await PredefinedMenuItem.new({ item: "Separator" }),
       await MenuItem.new({ text: "Save", accelerator: "CmdOrCtrl+S", action: run(save) }),
       await MenuItem.new({ text: "Save As…", accelerator: "CmdOrCtrl+Shift+S", action: run(saveAs) }),
+      await PredefinedMenuItem.new({ item: "Separator" }),
+      await Submenu.new({
+        text: "Export",
+        items: [
+          await MenuItem.new({ text: "SVG…", action: run(exportSvg) }),
+          await MenuItem.new({ text: "PNG…", action: run(exportPng) }),
+          await MenuItem.new({ text: "PDF…", action: run(exportPdf) }),
+        ],
+      }),
       await PredefinedMenuItem.new({ item: "Separator" }),
       await PredefinedMenuItem.new({ item: "CloseWindow" }),
     ],

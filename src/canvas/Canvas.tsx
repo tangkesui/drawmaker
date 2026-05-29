@@ -21,6 +21,7 @@ import "@xyflow/react/dist/style.css";
 import { useEditorStore } from "../core/store";
 import { addNode, connectNodes, deleteEdges, deleteNodes, moveNodes } from "../core/operations";
 import type { DmEdge, DmNode, NodeData } from "../core/types";
+import { registerExportSource } from "./export";
 import { registerPlacement } from "./placement";
 import { allShapes } from "./shapes/registry";
 import { ShapeNode } from "./shapes/ShapeNode";
@@ -69,6 +70,11 @@ function CanvasInner() {
       addNode(kind, pos);
     });
   }, [screenToFlowPosition]);
+
+  // 注册导出用的 getNodes（带 measured 尺寸），供菜单 Export 调用
+  useEffect(() => {
+    registerExportSource(() => rf.getNodes());
+  }, [rf]);
 
   // 本地渲染态。store(doc) 是 SSOT，单向同步到这里；本地态只承载拖拽中的瞬态变化。
   const [nodes, setNodes] = useState<FlowNode[]>([]);

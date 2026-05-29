@@ -14,6 +14,12 @@ pub fn write_file(path: String, contents: String) -> Result<(), String> {
     fs::write(&path, contents).map_err(|e| e.to_string())
 }
 
+/// 写入二进制（PNG / PDF 导出用）。前端以 number[] 传入。
+#[tauri::command]
+pub fn write_file_bytes(path: String, contents: Vec<u8>) -> Result<(), String> {
+    fs::write(&path, contents).map_err(|e| e.to_string())
+}
+
 const RECENT_MAX: usize = 10;
 
 fn recent_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
