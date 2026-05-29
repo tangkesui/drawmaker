@@ -1,4 +1,4 @@
-import type { PointerEvent as ReactPointerEvent } from "react";
+import { useState, type PointerEvent as ReactPointerEvent } from "react";
 import { placeShapeAt } from "../canvas/placement";
 import { shapesByCategory, type ShapeDef } from "../canvas/shapes/registry";
 import "../canvas/shapes/shapes.css";
@@ -49,28 +49,57 @@ function startDrag(e: ReactPointerEvent, def: ShapeDef) {
   window.addEventListener("pointerup", up);
 }
 
-/** 左侧形状调色板。拖拽 item 到画布放置。 */
+/** 左侧形状调色板：搜索 + 分类折叠 + 拖拽放置。 */
 export function ShapePalette() {
+  const [query, setQuery] = useState("");
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  const q = query.trim().toLowerCase();
+  const groups = shapesByCategory()
+    .map((g) => ({
+      category: g.category,
+      shapes: q ? g.shapes.filter((s) => s.label.toLowerCase().includes(q)) : g.shapes,
+    }))
+    .filter((g) => g.shapes.length > 0);
+
+  const toggle = (c: string) => setCollapsed((prev) => ({ ...prev, [c]: !prev[c] }));
+
   return (
     <aside className="shape-palette">
-      {shapesByCategory().map((group) => (
-        <div key={group.category} className="palette-group">
-          <div className="palette-cat">{group.category}</div>
-          <div className="palette-items">
-            {group.shapes.map((def) => (
-              <div
-                key={def.kind}
-                className="palette-item"
-                onPointerDown={(e) => startDrag(e, def)}
-                title={`拖到画布：${def.label}`}
-              >
-                <Preview def={def} />
-                <span className="palette-name">{def.label}</span>
+      <input
+        className="palette-search"
+        placeholder="搜索形状…"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+
+      {groups.map((group) => {
+        // 搜索中强制展开，便于看到匹配项
+        const isCollapsed = !q && collapsed[group.category];
+        return (
+          <div key={group.category} className="palette-group">
+            <button className="palette-cat" onClick={() => toggle(group.category)}>
+              <span className={`palette-caret${isCollapsed ? " collapsed" : ""}`}>▾</span>
+              {group.category}
+            </button>
+            {!isCollapsed && (
+              <div className="palette-items">
+                {group.shapes.map((def) => (
+                  <div
+                    key={def.kind}
+                    className="palette-item"
+                    onPointerDown={(e) => startDrag(e, def)}
+                    title={`拖到画布：${def.label}`}
+                  >
+                    <Preview def={def} />
+                    <span className="palette-name">{def.label}</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </aside>
   );
 }

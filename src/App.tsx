@@ -6,6 +6,7 @@ import { initDragDrop } from "./services/dragDropService";
 import { initMenu } from "./services/menuService";
 import { showError } from "./services/notify";
 import { initCloseGuard } from "./services/windowService";
+import { PropertiesPanel } from "./ui/PropertiesPanel";
 import { ShapePalette } from "./ui/ShapePalette";
 import { TitleSync } from "./ui/TitleSync";
 import { Toolbar } from "./ui/Toolbar";
@@ -43,6 +44,7 @@ export default function App() {
         <main className="canvas-area">
           <Canvas />
         </main>
+        <PropertiesPanel />
       </div>
       <StatusBar />
     </div>

@@ -79,7 +79,8 @@
 ✅ **Phase 2**: 文件 IO — 新建/打开/保存/另存 `.dm`、最近打开列表、脏标记 — 计划已归档 `docs/plan/archive/plan-2026-05-29-phase2-file-io.md`
 ✅ **Phase 3**: macOS 系统集成 — 原生菜单（File/Edit/View）、文件拖放、单实例、未保存保护、快捷键归口 — 计划已归档 `docs/plan/archive/plan-2026-05-29-phase3-macos.md`
 ✅ **Phase 4**: 自定义 Custom Nodes — 数据驱动形状注册表 + 通用 ShapeNode + 10 个形状 + 调色板（pointer 拖放）+ 双击改名 — 计划已归档 `docs/plan/archive/plan-2026-05-29-phase4-shapes.md`
-🔄 **Phase 5**: UI 完整化 — 侧栏 shape library（搜索/分类）、属性面板、自动布局（dagre）
+✅ **Phase 5**: UI 完整化 — 属性面板（颜色/线宽/字号/标签）+ 调色板搜索/折叠 + dagre 自动布局 — 计划已归档 `docs/plan/archive/plan-2026-05-29-phase5-ui.md`
+🔄 **Phase 6**: 导出 — SVG / PNG / PDF
 
 ## Roadmap
 
@@ -90,8 +91,8 @@
 | 2 | 文件 IO：打开/保存 `.dm`，最近打开列表 | ✅ |
 | 3 | macOS 系统集成：原生菜单、文件拖放、单实例、快捷键 | ✅ |
 | 4 | 自定义 Custom Nodes：架构图常用形状（服务/数据库/队列/LB/CDN 等） | ✅ |
-| 5 | UI 完整化：侧栏 shape library、属性面板、自动布局（dagre） | 🔄 |
-| 6 | 导出：SVG / PNG / PDF | ⏳ |
+| 5 | UI 完整化：侧栏 shape library、属性面板、自动布局（dagre） | ✅ |
+| 6 | 导出：SVG / PNG / PDF | 🔄 |
 | 7 | 打包：dmg + macOS 签名 + 公证（notarization） | ⏳ |
 | 8+ | 持续迭代：elkjs 进阶布局、主题、模板、暗色模式、AI 辅助等 | ⏳ |
 
@@ -127,3 +128,4 @@
 - 2026-05-29：**Phase 2 完成**。文件 IO 全链路：Rust 自定义命令（`std::fs` read/write + `recent.json`）+ `tauri-plugin-dialog` 原生面板；前端 `services/` 层是唯一碰 Tauri 的地方（守架构铁律）；`core/serialize` 带版本校验 + vitest；脏状态由 `history.cursor !== savedCursor` 派生（不单独存布尔）；新建/打开会清空 history 防跨文件撤回。新增 store `file` slice + `document-actions`。决策：读写用自定义命令（不引 fs 插件）、最近列表用自定义 recent.json（不引 store 插件）、未保存保护留到 Phase 3。计划归档。
 - 2026-05-29：**Phase 3 完成**。原生 macOS 菜单（前端 JS Menu API 构建，菜单项直接调 document-actions/history/viewport，无 Rust 事件回传）；App 级快捷键归口菜单 accelerator、Keymap 只留 V/R/E；未保存保护（New/Open/关窗都拦，dialog `ask` 两按钮）；文件拖放打开；`tauri-plugin-single-instance` 聚焦已有窗口；viewport 控制桥打通 xyflow 缩放/fit。**尽调中发现并修复 Phase 2 隐藏 bug**：窗口标题因缺 `core:window:allow-set-title` 权限被静默拒绝，本 Phase 补权限 + 去掉静默吞错。计划归档。
 - 2026-05-29：**Phase 4 完成**。数据驱动形状注册表（`canvas/shapes/registry`：每形状一条 `{kind,label,category,defaultSize,render(SVG)}`，nodeTypes/调色板/尺寸全派生）；通用 `ShapeNode` 渲染所有形状 + 双击改名（`renameNode` command）；10 个形状（通用 rect/rounded/ellipse/diamond + 架构 service/database/queue/loadbalancer/cloud/actor/note）；左侧调色板拖放放置。`NodeKind` 放宽为 string + 反序列化 fallback；移除 tool 工具模式（拖放放置不需要）、删 Keymap 与 `react-hotkeys-hook`（快捷键已全归原生菜单）。**执行中踩坑并修正**：Tauri OS 级文件拖放与 webview HTML5 DnD 同窗口互斥，调色板拖放改用 pointer 事件自实现（保住 Phase 3 文件拖放打开）。计划归档。
+- 2026-05-29：**Phase 5 完成**。属性面板（右栏，选中节点改 fill/stroke/strokeWidth/fontSize/label，作用于所有选中，一次改动一条 history，按选区 key 重挂避免误写）；`NodeData` 加可选样式字段（旧 .dm 兼容），`ShapeNode` inline 覆盖回落 CSS；调色板加搜索 + 分类折叠；dagre 自动布局（`auto-layout.ts` 纯函数 + `applyAutoLayout` 一条 command + 菜单 View→Arrange 纵/横，布局后 fitView）。新增 `updateNodeStyle` command。计划归档。

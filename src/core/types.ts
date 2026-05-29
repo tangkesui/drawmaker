@@ -13,8 +13,13 @@ export type NodeKind = string;
 
 // 必须是 type alias 而非 interface：xyflow 的 Node<T> 约束 T extends Record<string, unknown>，
 // interface 不满足该约束（无隐式索引签名），type 字面量满足。
+// 样式字段全部 optional：缺省时回落 shapes.css / 默认；旧 .dm 无这些字段照常加载。
 export type NodeData = {
   label: string;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  fontSize?: number;
 };
 
 export interface DmNode {

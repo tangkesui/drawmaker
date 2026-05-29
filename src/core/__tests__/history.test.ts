@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { createInitialState, useEditorStore } from "../store";
-import { addNode, connectNodes, deleteNodes, moveNodes, __resetIds } from "../operations";
+import { addNode, connectNodes, deleteNodes, moveNodes, updateNodeStyle, __resetIds } from "../operations";
 import { canRedo, canUndo, redo, undo } from "../history";
 
 beforeEach(() => {
@@ -52,6 +52,15 @@ describe("history (patch-based)", () => {
     addNode("ellipse", { x: 99, y: 99 });
     expect(canRedo()).toBe(false);
     expect(doc().nodes).toHaveLength(2);
+  });
+
+  test("updateNodeStyle changes data; undo reverts", () => {
+    const id = addNode("rect", { x: 0, y: 0 });
+    updateNodeStyle([id], { fill: "#ff0000", strokeWidth: 3 });
+    expect(doc().nodes[0].data.fill).toBe("#ff0000");
+    expect(doc().nodes[0].data.strokeWidth).toBe(3);
+    undo();
+    expect(doc().nodes[0].data.fill).toBeUndefined();
   });
 
   test("canUndo / canRedo track the cursor", () => {

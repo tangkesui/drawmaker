@@ -1,4 +1,5 @@
 import { Menu, MenuItem, PredefinedMenuItem, Submenu } from "@tauri-apps/api/menu";
+import { applyAutoLayout } from "../canvas/auto-layout";
 import { viewport } from "../canvas/viewport-controls";
 import {
   fileName,
@@ -84,6 +85,9 @@ async function buildMenu(): Promise<Menu> {
       await MenuItem.new({ text: "Zoom Out", accelerator: "CmdOrCtrl+-", action: () => viewport.zoomOut() }),
       await MenuItem.new({ text: "Reset Zoom", accelerator: "CmdOrCtrl+0", action: () => viewport.resetZoom() }),
       await MenuItem.new({ text: "Fit", accelerator: "CmdOrCtrl+1", action: () => viewport.fitView() }),
+      await PredefinedMenuItem.new({ item: "Separator" }),
+      await MenuItem.new({ text: "Arrange ↓ (纵向)", accelerator: "CmdOrCtrl+L", action: () => applyAutoLayout("TB") }),
+      await MenuItem.new({ text: "Arrange → (横向)", accelerator: "CmdOrCtrl+Shift+L", action: () => applyAutoLayout("LR") }),
     ],
   });
 

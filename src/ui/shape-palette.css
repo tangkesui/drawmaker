@@ -9,15 +9,44 @@
   user-select: none;
 }
 
+.palette-search {
+  width: 100%;
+  height: 28px;
+  margin-bottom: 12px;
+  padding: 0 8px;
+  font-size: 12px;
+  border: 1px solid #c7ccd3;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+
 .palette-group {
   margin-bottom: 14px;
 }
 
 .palette-cat {
-  margin: 0 4px 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  margin: 0 0 6px;
+  padding: 2px 4px;
   font-size: 11px;
   font-weight: 600;
   color: #8a929c;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.palette-caret {
+  display: inline-block;
+  transition: transform 0.12s;
+}
+
+.palette-caret.collapsed {
+  transform: rotate(-90deg);
 }
 
 .palette-items {

@@ -1,4 +1,4 @@
-import type { NodeKind } from "./types";
+import type { NodeData, NodeKind } from "./types";
 import { commit } from "./history";
 
 /**
@@ -29,6 +29,17 @@ export function renameNode(id: string, label: string): void {
   commit("rename", (d) => {
     const n = d.nodes.find((x) => x.id === id);
     if (n) n.data.label = label;
+  });
+}
+
+/** 改多个节点的样式/标签，一条 command。patch 里 undefined 的字段不动。 */
+export function updateNodeStyle(ids: string[], patch: Partial<NodeData>): void {
+  if (ids.length === 0) return;
+  const set = new Set(ids);
+  commit("style", (d) => {
+    for (const n of d.nodes) {
+      if (set.has(n.id)) Object.assign(n.data, patch);
+    }
   });
 }
 

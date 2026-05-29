@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import { renameNode } from "../../core/operations";
 import type { NodeData } from "../../core/types";
@@ -28,13 +28,19 @@ export function ShapeNode({ id, type, data, selected }: NodeProps<Node<NodeData>
     if (text !== data.label) renameNode(id, text);
   };
 
+  // 逐节点样式覆盖：只写存在的字段，缺省回落 .shape-geom（CSS）。
+  const geomStyle: CSSProperties = {};
+  if (data.fill) geomStyle.fill = data.fill;
+  if (data.stroke) geomStyle.stroke = data.stroke;
+  if (data.strokeWidth != null) geomStyle.strokeWidth = data.strokeWidth;
+
   return (
     <div
       className={`shape-node${selected ? " is-selected" : ""}`}
       style={{ width: w, height: h }}
       onDoubleClick={() => setEditing(true)}
     >
-      <svg className="shape-geom" width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+      <svg className="shape-geom" width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={geomStyle}>
         {def.render(w, h)}
       </svg>
 
@@ -47,6 +53,7 @@ export function ShapeNode({ id, type, data, selected }: NodeProps<Node<NodeData>
         <input
           ref={inputRef}
           className="shape-label-input nodrag"
+          style={data.fontSize ? { fontSize: data.fontSize } : undefined}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onBlur={commit}
@@ -60,7 +67,9 @@ export function ShapeNode({ id, type, data, selected }: NodeProps<Node<NodeData>
           }}
         />
       ) : (
-        <span className="shape-label">{data.label || def.label}</span>
+        <span className="shape-label" style={data.fontSize ? { fontSize: data.fontSize } : undefined}>
+          {data.label || def.label}
+        </span>
       )}
     </div>
   );
