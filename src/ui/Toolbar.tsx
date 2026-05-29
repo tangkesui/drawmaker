@@ -2,22 +2,10 @@ import { newDocument, openViaDialog, save } from "../core/document-actions";
 import { redo, undo } from "../core/history";
 import { deleteNodes } from "../core/operations";
 import { useEditorStore } from "../core/store";
-import type { Tool } from "../core/types";
 import { showError } from "../services/notify";
 import "./toolbar.css";
 
-const TOOLS: { id: Tool; label: string; key: string }[] = [
-  { id: "select", label: "Select", key: "V" },
-  { id: "rect", label: "Rect", key: "R" },
-  { id: "ellipse", label: "Ellipse", key: "E" },
-];
-
-function setTool(t: Tool) {
-  useEditorStore.setState((s) => ({ view: { ...s.view, tool: t } }));
-}
-
 export function Toolbar() {
-  const tool = useEditorStore((s) => s.view.tool);
   const cursor = useEditorStore((s) => s.history.cursor);
   const stackLen = useEditorStore((s) => s.history.stack.length);
   const selectedCount = useEditorStore((s) => s.view.selected.length);
@@ -35,21 +23,6 @@ export function Toolbar() {
         <button disabled={!dirty} onClick={() => save().catch(showError)} title="Save (⌘S)">
           Save
         </button>
-      </div>
-
-      <span className="toolbar-sep" />
-
-      <div className="toolbar-group">
-        {TOOLS.map((t) => (
-          <button
-            key={t.id}
-            className={tool === t.id ? "is-active" : ""}
-            onClick={() => setTool(t.id)}
-            title={`${t.label} (${t.key})`}
-          >
-            {t.label}
-          </button>
-        ))}
       </div>
 
       <span className="toolbar-sep" />

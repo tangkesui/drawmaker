@@ -6,7 +6,7 @@ import { initDragDrop } from "./services/dragDropService";
 import { initMenu } from "./services/menuService";
 import { showError } from "./services/notify";
 import { initCloseGuard } from "./services/windowService";
-import { Keymap } from "./ui/Keymap";
+import { ShapePalette } from "./ui/ShapePalette";
 import { TitleSync } from "./ui/TitleSync";
 import { Toolbar } from "./ui/Toolbar";
 import "./App.css";
@@ -36,12 +36,14 @@ export default function App() {
 
   return (
     <div className="layout">
-      <Keymap />
       <TitleSync />
       <Toolbar />
-      <main className="canvas-area">
-        <Canvas />
-      </main>
+      <div className="workspace">
+        <ShapePalette />
+        <main className="canvas-area">
+          <Canvas />
+        </main>
+      </div>
       <StatusBar />
     </div>
   );

@@ -1,0 +1,73 @@
+.shape-palette {
+  width: 168px;
+  height: 100%;
+  overflow-y: auto;
+  padding: 10px 8px;
+  box-sizing: border-box;
+  background: #fafbfc;
+  border-right: 1px solid #d8dce1;
+  user-select: none;
+}
+
+.palette-group {
+  margin-bottom: 14px;
+}
+
+.palette-cat {
+  margin: 0 4px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8a929c;
+}
+
+.palette-items {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.palette-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.palette-item:hover {
+  background: #eef1f5;
+  border-color: #d8dce1;
+}
+
+.palette-item:active {
+  cursor: grabbing;
+}
+
+.palette-preview {
+  width: 100%;
+  height: 40px;
+}
+
+.palette-name {
+  font-size: 11px;
+  color: #4b5563;
+  text-align: center;
+}
+
+.shape-drag-ghost {
+  position: fixed;
+  z-index: 1000;
+  padding: 3px 8px;
+  font-size: 12px;
+  color: #1f2933;
+  background: #ffffff;
+  border: 1px solid #2f6fed;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  user-select: none;
+}

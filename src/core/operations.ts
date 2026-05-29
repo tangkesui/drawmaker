@@ -25,6 +25,13 @@ export function addNode(kind: NodeKind, position: { x: number; y: number }, labe
   return id;
 }
 
+export function renameNode(id: string, label: string): void {
+  commit("rename", (d) => {
+    const n = d.nodes.find((x) => x.id === id);
+    if (n) n.data.label = label;
+  });
+}
+
 export function moveNodes(moves: { id: string; position: { x: number; y: number } }[]): void {
   if (moves.length === 0) return;
   commit("move", (d) => {

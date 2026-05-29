@@ -7,7 +7,9 @@ import type { Patch } from "immer";
  * core ↔ xyflow 的形状映射只放 Canvas 层（src/canvas）。
  */
 
-export type NodeKind = "rect" | "ellipse";
+// 形状种类 = 注册表（src/canvas/shapes/registry）的 key。放宽为 string：
+// 序列化向前兼容，反序列化遇未知 kind 由注册表 fallback 渲染。
+export type NodeKind = string;
 
 // 必须是 type alias 而非 interface：xyflow 的 Node<T> 约束 T extends Record<string, unknown>，
 // interface 不满足该约束（无隐式索引签名），type 字面量满足。
@@ -41,13 +43,9 @@ export interface DmDocument {
   meta: DocumentMeta;
 }
 
-// 连线通过拖拽节点 Handle 完成，无需独立 connect 工具。
-export type Tool = "select" | "rect" | "ellipse";
-
-/** View state — 不入 history（hover / 缩放 / 选区 / 当前工具）。 */
+/** View state — 不入 history（hover / 缩放 / 选区）。形状放置走调色板拖放，无工具模式。 */
 export interface ViewState {
   selected: string[];
-  tool: Tool;
   viewport: { x: number; y: number; zoom: number };
   hoverId: string | null;
 }

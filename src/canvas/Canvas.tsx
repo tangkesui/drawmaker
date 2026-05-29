@@ -21,15 +21,16 @@ import "@xyflow/react/dist/style.css";
 import { useEditorStore } from "../core/store";
 import { addNode, connectNodes, deleteEdges, deleteNodes, moveNodes } from "../core/operations";
 import type { DmEdge, DmNode, NodeData } from "../core/types";
-import { EllipseNode } from "./nodes/EllipseNode";
-import { RectNode } from "./nodes/RectNode";
+import { registerPlacement } from "./placement";
+import { allShapes } from "./shapes/registry";
+import { ShapeNode } from "./shapes/ShapeNode";
 import { registerViewportControls } from "./viewport-controls";
-import "./canvas.css";
 
 type FlowNode = Node<NodeData>;
 type FlowEdge = Edge;
 
-const nodeTypes = { rect: RectNode, ellipse: EllipseNode };
+// 所有形状共用通用 ShapeNode；具体形状由节点 type（=kind）在 ShapeNode 内查注册表决定。
+const nodeTypes = Object.fromEntries(allShapes().map((s) => [s.kind, ShapeNode]));
 
 function toFlowNode(n: DmNode, selected: boolean): FlowNode {
   return { id: n.id, type: n.kind, position: n.position, data: n.data, selected };
@@ -48,7 +49,6 @@ function toFlowEdge(e: DmEdge): FlowEdge {
 function CanvasInner() {
   const docNodes = useEditorStore((s) => s.doc.nodes);
   const docEdges = useEditorStore((s) => s.doc.edges);
-  const tool = useEditorStore((s) => s.view.tool);
   const rf = useReactFlow();
   const { screenToFlowPosition } = rf;
 
@@ -61,6 +61,14 @@ function CanvasInner() {
       fitView: () => void rf.fitView(),
     });
   }, [rf]);
+
+  // 注册「按屏幕坐标放置形状」，供调色板 pointer 拖放松手时调用
+  useEffect(() => {
+    registerPlacement((kind, clientX, clientY) => {
+      const pos = screenToFlowPosition({ x: clientX, y: clientY });
+      addNode(kind, pos);
+    });
+  }, [screenToFlowPosition]);
 
   // 本地渲染态。store(doc) 是 SSOT，单向同步到这里；本地态只承载拖拽中的瞬态变化。
   const [nodes, setNodes] = useState<FlowNode[]>([]);
@@ -109,18 +117,6 @@ function CanvasInner() {
     useEditorStore.setState((s) => ({ view: { ...s.view, selected } }));
   }, []);
 
-  const onPaneClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (tool === "rect" || tool === "ellipse") {
-        const pos = screenToFlowPosition({ x: e.clientX, y: e.clientY });
-        addNode(tool, pos);
-        // 放置后回到选择工具，避免误触连续添加
-        useEditorStore.setState((s) => ({ view: { ...s.view, tool: "select" } }));
-      }
-    },
-    [tool, screenToFlowPosition],
-  );
-
   return (
     <ReactFlow
       nodes={nodes}
@@ -135,7 +131,6 @@ function CanvasInner() {
       onEdgesDelete={onEdgesDelete}
       onConnect={onConnect}
       onSelectionChange={onSelectionChange}
-      onPaneClick={onPaneClick}
       fitView
       proOptions={{ hideAttribution: true }}
     >
