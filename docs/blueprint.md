@@ -81,7 +81,8 @@
 ✅ **Phase 4**: 自定义 Custom Nodes — 数据驱动形状注册表 + 通用 ShapeNode + 10 个形状 + 调色板（pointer 拖放）+ 双击改名 — 计划已归档 `docs/plan/archive/plan-2026-05-29-phase4-shapes.md`
 ✅ **Phase 5**: UI 完整化 — 属性面板（颜色/线宽/字号/标签）+ 调色板搜索/折叠 + dagre 自动布局 — 计划已归档 `docs/plan/archive/plan-2026-05-29-phase5-ui.md`
 ✅ **Phase 6**: 导出 — SVG / PNG / PDF（html-to-image 快照 + pdf-lib，全图 bounds）— 计划已归档 `docs/plan/archive/plan-2026-05-29-phase6-export.md`
-🔄 **Phase 7**: 打包 — dmg + macOS 签名 + 公证（notarization）
+✅ **Phase 7**: 打包（自用 $0）— `pnpm tauri build` 出 ad-hoc 签名 dmg（~3.4MB），README 含首次放行说明；公证留待将来分发 — 计划已归档 `docs/plan/archive/plan-2026-05-29-phase7-package.md`
+🔄 **Phase 8+**: 持续迭代 — elkjs 进阶布局、主题/暗色、模板、形状 resize、边样式等（见 Backlog）
 
 ## Roadmap
 
@@ -94,8 +95,8 @@
 | 4 | 自定义 Custom Nodes：架构图常用形状（服务/数据库/队列/LB/CDN 等） | ✅ |
 | 5 | UI 完整化：侧栏 shape library、属性面板、自动布局（dagre） | ✅ |
 | 6 | 导出：SVG / PNG / PDF | ✅ |
-| 7 | 打包：dmg + macOS 签名 + 公证（notarization） | 🔄 |
-| 8+ | 持续迭代：elkjs 进阶布局、主题、模板、暗色模式、AI 辅助等 | ⏳ |
+| 7 | 打包：dmg + macOS 签名 + 公证（notarization） | ✅（自用 $0：dmg + ad-hoc；公证留待分发） |
+| 8+ | 持续迭代：elkjs 进阶布局、主题、模板、暗色模式、AI 辅助等 | 🔄 |
 
 ## 关键指针
 
@@ -131,3 +132,4 @@
 - 2026-05-29：**Phase 4 完成**。数据驱动形状注册表（`canvas/shapes/registry`：每形状一条 `{kind,label,category,defaultSize,render(SVG)}`，nodeTypes/调色板/尺寸全派生）；通用 `ShapeNode` 渲染所有形状 + 双击改名（`renameNode` command）；10 个形状（通用 rect/rounded/ellipse/diamond + 架构 service/database/queue/loadbalancer/cloud/actor/note）；左侧调色板拖放放置。`NodeKind` 放宽为 string + 反序列化 fallback；移除 tool 工具模式（拖放放置不需要）、删 Keymap 与 `react-hotkeys-hook`（快捷键已全归原生菜单）。**执行中踩坑并修正**：Tauri OS 级文件拖放与 webview HTML5 DnD 同窗口互斥，调色板拖放改用 pointer 事件自实现（保住 Phase 3 文件拖放打开）。计划归档。
 - 2026-05-29：**Phase 5 完成**。属性面板（右栏，选中节点改 fill/stroke/strokeWidth/fontSize/label，作用于所有选中，一次改动一条 history，按选区 key 重挂避免误写）；`NodeData` 加可选样式字段（旧 .dm 兼容），`ShapeNode` inline 覆盖回落 CSS；调色板加搜索 + 分类折叠；dagre 自动布局（`auto-layout.ts` 纯函数 + `applyAutoLayout` 一条 command + 菜单 View→Arrange 纵/横，布局后 fitView）。新增 `updateNodeStyle` command。计划归档。
 - 2026-05-29：**Phase 6 完成**。导出 SVG / PNG / PDF：html-to-image 截 `.react-flow__viewport`（不含控件）、按 `getNodesBounds` 全图 bounds 平移导全图（非可见视口）；PNG/PDF 二进制经新增 Rust `write_file_bytes(Vec<u8>)` 写盘，SVG 走文本 `write_file`；PDF 用 pdf-lib 嵌 PNG 一页。`canvas/export-utils` 纯函数（box 换算 / dataUrl→bytes）有 vitest。菜单 File→Export ▸（SVG/PNG/PDF）。计划归档。
+- 2026-05-29：**Phase 7 完成（自用 $0）**。`tauri.conf.json` 配 `bundle.macOS.signingIdentity="-"`（ad-hoc）+ minimumSystemVersion 12.0 + category；`pnpm tauri build` 出 `drawmaker_0.1.0_aarch64.dmg`（~3.4MB），codesign 验证 adhoc 有效，spctl rejected（未公证，预期）。本机构建无 quarantine、直接可运行。新增 `README.md`（构建 + 首次放行说明）。不涉及 Apple 凭据，未建 security.md。公证 / Developer ID（$99/年）留待将来分发。计划归档。**MVP 主线 Phase 1-7 全部完成，drawmaker 已是可日常使用的作图工具。**
