@@ -1,7 +1,10 @@
+import { newDocument, openViaDialog, save } from "../core/document-actions";
 import { redo, undo } from "../core/history";
 import { deleteNodes } from "../core/operations";
 import { useEditorStore } from "../core/store";
 import type { Tool } from "../core/types";
+import { showError } from "../services/notify";
+import { RecentMenu } from "./RecentMenu";
 import "./toolbar.css";
 
 const TOOLS: { id: Tool; label: string; key: string }[] = [
@@ -19,9 +22,25 @@ export function Toolbar() {
   const cursor = useEditorStore((s) => s.history.cursor);
   const stackLen = useEditorStore((s) => s.history.stack.length);
   const selectedCount = useEditorStore((s) => s.view.selected.length);
+  const dirty = useEditorStore((s) => s.history.cursor !== s.file.savedCursor);
 
   return (
     <div className="toolbar">
+      <div className="toolbar-group">
+        <button onClick={newDocument} title="New (⌘N)">
+          New
+        </button>
+        <button onClick={() => openViaDialog().catch(showError)} title="Open (⌘O)">
+          Open
+        </button>
+        <button disabled={!dirty} onClick={() => save().catch(showError)} title="Save (⌘S)">
+          Save
+        </button>
+        <RecentMenu />
+      </div>
+
+      <span className="toolbar-sep" />
+
       <div className="toolbar-group">
         {TOOLS.map((t) => (
           <button

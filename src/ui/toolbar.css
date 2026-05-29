@@ -46,3 +46,42 @@
   color: #aab2bd;
   cursor: default;
 }
+
+.recent-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.recent-list {
+  position: absolute;
+  top: 32px;
+  left: 0;
+  z-index: 10;
+  min-width: 180px;
+  max-height: 280px;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  list-style: none;
+  background: #ffffff;
+  border: 1px solid #c7ccd3;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.recent-list li {
+  display: block;
+}
+
+.recent-list button {
+  width: 100%;
+  min-width: 0;
+  height: 26px;
+  padding: 0 8px;
+  text-align: left;
+  border: none;
+  border-radius: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -9,10 +9,18 @@ import type { DmDocument, History, ViewState } from "./types";
  *
  * doc 的所有变更都走 `history.commit()`（见 history.ts），不直接 setState。
  */
+/** 文件状态。dirty 不单独存，由 history.cursor !== file.savedCursor 派生。 */
+export interface FileState {
+  currentPath: string | null;
+  savedCursor: number;
+  recent: string[];
+}
+
 export interface EditorState {
   doc: DmDocument;
   view: ViewState;
   history: History;
+  file: FileState;
 }
 
 export function createEmptyDocument(): DmDocument {
@@ -29,6 +37,7 @@ export function createInitialState(): EditorState {
       hoverId: null,
     },
     history: { stack: [], cursor: -1 },
+    file: { currentPath: null, savedCursor: -1, recent: [] },
   };
 }
 

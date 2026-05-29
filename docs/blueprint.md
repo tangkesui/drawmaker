@@ -76,7 +76,8 @@
 
 ✅ **Phase 0**: 环境搭建完成
 ✅ **Phase 1**: Tauri 2 + React + xyflow 骨架 + Editor Core（Zustand + patch-based 撤销栈）+ 基础 Toolbar 跑通 — 计划已归档 `docs/plan/archive/plan-2026-05-29-bootstrap-tauri-xyflow.md`
-🔄 **Phase 2**: 文件 IO — 打开/保存 `.dm`，最近打开列表
+✅ **Phase 2**: 文件 IO — 新建/打开/保存/另存 `.dm`、最近打开列表、脏标记 — 计划已归档 `docs/plan/archive/plan-2026-05-29-phase2-file-io.md`
+🔄 **Phase 3**: macOS 系统集成 — 原生菜单、文件拖放、单实例、快捷键
 
 ## Roadmap
 
@@ -84,8 +85,8 @@
 |---|---|---|
 | 0 | 环境搭建（docs 骨架 + git） | ✅ |
 | 1 | Tauri + React + xyflow 骨架 + Editor Core (Zustand + patch-based 撤销) + 基础 Toolbar | ✅ |
-| 2 | 文件 IO：打开/保存 `.dm`，最近打开列表 | 🔄 |
-| 3 | macOS 系统集成：原生菜单、文件拖放、单实例、快捷键 | ⏳ |
+| 2 | 文件 IO：打开/保存 `.dm`，最近打开列表 | ✅ |
+| 3 | macOS 系统集成：原生菜单、文件拖放、单实例、快捷键 | 🔄 |
 | 4 | 自定义 Custom Nodes：架构图常用形状（服务/数据库/队列/LB/CDN 等） | ⏳ |
 | 5 | UI 完整化：侧栏 shape library、属性面板、自动布局（dagre） | ⏳ |
 | 6 | 导出：SVG / PNG / PDF | ⏳ |
@@ -121,3 +122,4 @@
 - 2026-05-29：**渲染内核换型**。发现 tldraw v5 是 SDK License（非自由）、v2 是非商用许可、实际 ~165k LOC（不是宣传的 40k）。改用 xyflow / React Flow（MIT、~30k LOC、节点-连线模型契合架构图/流程图）。配套技术选型确定：Zustand（状态）、Command 模式（撤销栈）、dagre（自动布局）、react-hotkeys-hook（快捷键）。架构图入 blueprint。原 Phase 1 计划归档，新建 plan-2026-05-29-bootstrap-tauri-xyflow.md。
 - 2026-05-29：35 项核心概念补盲到 Notion 知识树（CS → 前端 / 通用基础 / 后端 / 框架 / 库 等多个分支，含 3 新 Branch + 30 新 Leaf）。
 - 2026-05-29：**Phase 1 完成**。Tauri + React + xyflow 骨架跑通；Editor Core 落地（Zustand store 三块 doc/view/history + immer patch-based 撤销栈 + operations 调用点）；自定义 Rect/Ellipse 节点 + Toolbar + 快捷键。撤销重入用「历史只从 xyflow 手势回调采集」的结构解法（非时间窗 flag）。core 逻辑有 vitest headless 覆盖。计划归档。
+- 2026-05-29：**Phase 2 完成**。文件 IO 全链路：Rust 自定义命令（`std::fs` read/write + `recent.json`）+ `tauri-plugin-dialog` 原生面板；前端 `services/` 层是唯一碰 Tauri 的地方（守架构铁律）；`core/serialize` 带版本校验 + vitest；脏状态由 `history.cursor !== savedCursor` 派生（不单独存布尔）；新建/打开会清空 history 防跨文件撤回。新增 store `file` slice + `document-actions`。决策：读写用自定义命令（不引 fs 插件）、最近列表用自定义 recent.json（不引 store 插件）、未保存保护留到 Phase 3。计划归档。

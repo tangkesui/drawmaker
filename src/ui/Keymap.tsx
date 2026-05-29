@@ -1,7 +1,9 @@
 import { useHotkeys } from "react-hotkeys-hook";
+import { newDocument, openViaDialog, save, saveAs } from "../core/document-actions";
 import { redo, undo } from "../core/history";
 import { useEditorStore } from "../core/store";
 import type { Tool } from "../core/types";
+import { showError } from "../services/notify";
 
 function setTool(t: Tool) {
   useEditorStore.setState((s) => ({ view: { ...s.view, tool: t } }));
@@ -23,6 +25,23 @@ export function Keymap() {
   useHotkeys("v", () => setTool("select"));
   useHotkeys("r", () => setTool("rect"));
   useHotkeys("e", () => setTool("ellipse"));
+
+  useHotkeys("mod+n", (e) => {
+    e.preventDefault();
+    newDocument();
+  });
+  useHotkeys("mod+o", (e) => {
+    e.preventDefault();
+    openViaDialog().catch(showError);
+  });
+  useHotkeys("mod+s", (e) => {
+    e.preventDefault();
+    save().catch(showError);
+  });
+  useHotkeys("mod+shift+s", (e) => {
+    e.preventDefault();
+    saveAs().catch(showError);
+  });
 
   return null;
 }
