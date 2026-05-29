@@ -23,6 +23,7 @@ import { addNode, connectNodes, deleteEdges, deleteNodes, moveNodes } from "../c
 import type { DmEdge, DmNode, NodeData } from "../core/types";
 import { EllipseNode } from "./nodes/EllipseNode";
 import { RectNode } from "./nodes/RectNode";
+import { registerViewportControls } from "./viewport-controls";
 import "./canvas.css";
 
 type FlowNode = Node<NodeData>;
@@ -48,7 +49,18 @@ function CanvasInner() {
   const docNodes = useEditorStore((s) => s.doc.nodes);
   const docEdges = useEditorStore((s) => s.doc.edges);
   const tool = useEditorStore((s) => s.view.tool);
-  const { screenToFlowPosition } = useReactFlow();
+  const rf = useReactFlow();
+  const { screenToFlowPosition } = rf;
+
+  // 把缩放/fit 注册到 viewport 控制桥，供原生菜单调用
+  useEffect(() => {
+    registerViewportControls({
+      zoomIn: () => void rf.zoomIn(),
+      zoomOut: () => void rf.zoomOut(),
+      resetZoom: () => void rf.zoomTo(1),
+      fitView: () => void rf.fitView(),
+    });
+  }, [rf]);
 
   // 本地渲染态。store(doc) 是 SSOT，单向同步到这里；本地态只承载拖拽中的瞬态变化。
   const [nodes, setNodes] = useState<FlowNode[]>([]);

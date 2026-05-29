@@ -4,7 +4,6 @@ import { deleteNodes } from "../core/operations";
 import { useEditorStore } from "../core/store";
 import type { Tool } from "../core/types";
 import { showError } from "../services/notify";
-import { RecentMenu } from "./RecentMenu";
 import "./toolbar.css";
 
 const TOOLS: { id: Tool; label: string; key: string }[] = [
@@ -27,7 +26,7 @@ export function Toolbar() {
   return (
     <div className="toolbar">
       <div className="toolbar-group">
-        <button onClick={newDocument} title="New (⌘N)">
+        <button onClick={() => newDocument().catch(showError)} title="New (⌘N)">
           New
         </button>
         <button onClick={() => openViaDialog().catch(showError)} title="Open (⌘O)">
@@ -36,7 +35,6 @@ export function Toolbar() {
         <button disabled={!dirty} onClick={() => save().catch(showError)} title="Save (⌘S)">
           Save
         </button>
-        <RecentMenu />
       </div>
 
       <span className="toolbar-sep" />

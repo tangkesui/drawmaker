@@ -10,7 +10,8 @@ export function TitleSync() {
 
   useEffect(() => {
     const title = `${dirty ? "• " : ""}${fileName(currentPath)} — drawmaker`;
-    setWindowTitle(title).catch(() => {});
+    // 不静默吞错：标题更新失败（如权限缺失）打到控制台，便于发现（避免 modal 刷屏）
+    setWindowTitle(title).catch(console.error);
   }, [currentPath, dirty]);
 
   return null;

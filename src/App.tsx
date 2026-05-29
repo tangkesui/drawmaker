@@ -2,6 +2,10 @@ import { useEffect } from "react";
 import { loadRecentList } from "./core/document-actions";
 import { useEditorStore } from "./core/store";
 import { Canvas } from "./canvas/Canvas";
+import { initDragDrop } from "./services/dragDropService";
+import { initMenu } from "./services/menuService";
+import { showError } from "./services/notify";
+import { initCloseGuard } from "./services/windowService";
 import { Keymap } from "./ui/Keymap";
 import { TitleSync } from "./ui/TitleSync";
 import { Toolbar } from "./ui/Toolbar";
@@ -22,7 +26,12 @@ function StatusBar() {
 
 export default function App() {
   useEffect(() => {
-    loadRecentList().catch(() => {});
+    (async () => {
+      await loadRecentList();
+      await initMenu();
+      await initCloseGuard();
+      await initDragDrop();
+    })().catch(showError);
   }, []);
 
   return (

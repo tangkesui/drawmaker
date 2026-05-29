@@ -77,7 +77,8 @@
 ✅ **Phase 0**: 环境搭建完成
 ✅ **Phase 1**: Tauri 2 + React + xyflow 骨架 + Editor Core（Zustand + patch-based 撤销栈）+ 基础 Toolbar 跑通 — 计划已归档 `docs/plan/archive/plan-2026-05-29-bootstrap-tauri-xyflow.md`
 ✅ **Phase 2**: 文件 IO — 新建/打开/保存/另存 `.dm`、最近打开列表、脏标记 — 计划已归档 `docs/plan/archive/plan-2026-05-29-phase2-file-io.md`
-🔄 **Phase 3**: macOS 系统集成 — 原生菜单、文件拖放、单实例、快捷键
+✅ **Phase 3**: macOS 系统集成 — 原生菜单（File/Edit/View）、文件拖放、单实例、未保存保护、快捷键归口 — 计划已归档 `docs/plan/archive/plan-2026-05-29-phase3-macos.md`
+🔄 **Phase 4**: 自定义 Custom Nodes — 架构图常用形状（服务/数据库/队列/LB/CDN 等）
 
 ## Roadmap
 
@@ -86,8 +87,8 @@
 | 0 | 环境搭建（docs 骨架 + git） | ✅ |
 | 1 | Tauri + React + xyflow 骨架 + Editor Core (Zustand + patch-based 撤销) + 基础 Toolbar | ✅ |
 | 2 | 文件 IO：打开/保存 `.dm`，最近打开列表 | ✅ |
-| 3 | macOS 系统集成：原生菜单、文件拖放、单实例、快捷键 | 🔄 |
-| 4 | 自定义 Custom Nodes：架构图常用形状（服务/数据库/队列/LB/CDN 等） | ⏳ |
+| 3 | macOS 系统集成：原生菜单、文件拖放、单实例、快捷键 | ✅ |
+| 4 | 自定义 Custom Nodes：架构图常用形状（服务/数据库/队列/LB/CDN 等） | 🔄 |
 | 5 | UI 完整化：侧栏 shape library、属性面板、自动布局（dagre） | ⏳ |
 | 6 | 导出：SVG / PNG / PDF | ⏳ |
 | 7 | 打包：dmg + macOS 签名 + 公证（notarization） | ⏳ |
@@ -123,3 +124,4 @@
 - 2026-05-29：35 项核心概念补盲到 Notion 知识树（CS → 前端 / 通用基础 / 后端 / 框架 / 库 等多个分支，含 3 新 Branch + 30 新 Leaf）。
 - 2026-05-29：**Phase 1 完成**。Tauri + React + xyflow 骨架跑通；Editor Core 落地（Zustand store 三块 doc/view/history + immer patch-based 撤销栈 + operations 调用点）；自定义 Rect/Ellipse 节点 + Toolbar + 快捷键。撤销重入用「历史只从 xyflow 手势回调采集」的结构解法（非时间窗 flag）。core 逻辑有 vitest headless 覆盖。计划归档。
 - 2026-05-29：**Phase 2 完成**。文件 IO 全链路：Rust 自定义命令（`std::fs` read/write + `recent.json`）+ `tauri-plugin-dialog` 原生面板；前端 `services/` 层是唯一碰 Tauri 的地方（守架构铁律）；`core/serialize` 带版本校验 + vitest；脏状态由 `history.cursor !== savedCursor` 派生（不单独存布尔）；新建/打开会清空 history 防跨文件撤回。新增 store `file` slice + `document-actions`。决策：读写用自定义命令（不引 fs 插件）、最近列表用自定义 recent.json（不引 store 插件）、未保存保护留到 Phase 3。计划归档。
+- 2026-05-29：**Phase 3 完成**。原生 macOS 菜单（前端 JS Menu API 构建，菜单项直接调 document-actions/history/viewport，无 Rust 事件回传）；App 级快捷键归口菜单 accelerator、Keymap 只留 V/R/E；未保存保护（New/Open/关窗都拦，dialog `ask` 两按钮）；文件拖放打开；`tauri-plugin-single-instance` 聚焦已有窗口；viewport 控制桥打通 xyflow 缩放/fit。**尽调中发现并修复 Phase 2 隐藏 bug**：窗口标题因缺 `core:window:allow-set-title` 权限被静默拒绝，本 Phase 补权限 + 去掉静默吞错。计划归档。
