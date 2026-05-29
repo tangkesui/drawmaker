@@ -1,0 +1,33 @@
+.dm-node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  min-height: 48px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #1f2933;
+  background: #ffffff;
+  border: 1.5px solid #5b6b7b;
+  box-sizing: border-box;
+}
+
+.dm-rect {
+  border-radius: 6px;
+}
+
+.dm-ellipse {
+  border-radius: 50%;
+  min-width: 96px;
+  min-height: 96px;
+}
+
+.dm-node.is-selected {
+  border-color: #2f6fed;
+  box-shadow: 0 0 0 2px rgba(47, 111, 237, 0.25);
+}
+
+.dm-label {
+  pointer-events: none;
+  user-select: none;
+}
