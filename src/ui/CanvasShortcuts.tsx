@@ -24,31 +24,32 @@ export function CanvasShortcuts() {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
       if (isEditable(e.target)) return;
-      switch (e.key.toLowerCase()) {
-        case "c":
+      // 用 e.code（物理键，IME/布局无关）；捕获阶段在 ReactFlow 吞键之前先处理。
+      switch (e.code) {
+        case "KeyC":
           e.preventDefault();
           copySelection();
           break;
-        case "x":
+        case "KeyX":
           e.preventDefault();
           cutSelection();
           break;
-        case "v":
+        case "KeyV":
           e.preventDefault();
           pasteClipboard();
           break;
-        case "d":
+        case "KeyD":
           e.preventDefault();
           duplicateSelection();
           break;
-        case "a":
+        case "KeyA":
           e.preventDefault();
           selectAll();
           break;
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, []);
 
   return null;

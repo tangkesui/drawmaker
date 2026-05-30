@@ -38,16 +38,24 @@ export function ShapeNode({ id, type, data, selected, width, height }: NodeProps
   return (
     <div
       className={`shape-node${selected ? " is-selected" : ""}`}
-      style={{ width: w, height: h }}
+      style={{ width: "100%", height: "100%" }}
       onDoubleClick={() => setEditing(true)}
     >
       <NodeResizer
         isVisible={selected}
         minWidth={40}
         minHeight={32}
+        lineStyle={{ borderColor: "#2f6fed" }}
+        handleStyle={{
+          width: 8,
+          height: 8,
+          borderRadius: 2,
+          background: "#2f6fed",
+          border: "1px solid #ffffff",
+        }}
         onResizeEnd={(_e, p) => resizeNode(id, { width: p.width, height: p.height })}
       />
-      <svg className="shape-geom" width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={geomStyle}>
+      <svg className="shape-geom" width="100%" height="100%" viewBox={`0 0 ${w} ${h}`} style={geomStyle}>
         {def.render(w, h)}
       </svg>
 

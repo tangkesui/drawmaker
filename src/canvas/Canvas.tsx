@@ -35,14 +35,15 @@ const nodeTypes = Object.fromEntries(allShapes().map((s) => [s.kind, ShapeNode])
 
 function toFlowNode(n: DmNode, selected: boolean): FlowNode {
   const size = n.size ?? getShape(n.kind).defaultSize;
+  // 尺寸走 style.width/height（v12 里 NodeResizer 靠它才能拿到尺寸渲染手柄），
+  // 不用顶层 width/height。
   return {
     id: n.id,
     type: n.kind,
     position: n.position,
     data: n.data,
     selected,
-    width: size.width,
-    height: size.height,
+    style: { width: size.width, height: size.height },
   };
 }
 
