@@ -10,7 +10,14 @@ import {
   saveAs,
 } from "../core/document-actions";
 import { redo, undo } from "../core/history";
-import { deleteNodes } from "../core/operations";
+import {
+  copySelection,
+  cutSelection,
+  deleteNodes,
+  duplicateSelection,
+  pasteClipboard,
+  selectAll,
+} from "../core/operations";
 import { useEditorStore } from "../core/store";
 import { exportPdf, exportPng, exportSvg } from "./exportService";
 import { showError } from "./notify";
@@ -75,12 +82,16 @@ async function buildMenu(): Promise<Menu> {
       await MenuItem.new({ text: "Undo", accelerator: "CmdOrCtrl+Z", action: () => undo() }),
       await MenuItem.new({ text: "Redo", accelerator: "CmdOrCtrl+Shift+Z", action: () => redo() }),
       await PredefinedMenuItem.new({ item: "Separator" }),
-      await PredefinedMenuItem.new({ item: "Cut" }),
-      await PredefinedMenuItem.new({ item: "Copy" }),
-      await PredefinedMenuItem.new({ item: "Paste" }),
-      await PredefinedMenuItem.new({ item: "SelectAll" }),
+      // 不绑 accelerator：⌘C/⌘X/⌘V/⌘D/⌘A 由 CanvasShortcuts 带焦点 guard 处理，
+      // 避免无差别拦截文本框里的文字复制粘贴。
+      await MenuItem.new({ text: "Cut (⌘X)", action: () => cutSelection() }),
+      await MenuItem.new({ text: "Copy (⌘C)", action: () => copySelection() }),
+      await MenuItem.new({ text: "Paste (⌘V)", action: () => pasteClipboard() }),
+      await MenuItem.new({ text: "Duplicate (⌘D)", action: () => duplicateSelection() }),
       await PredefinedMenuItem.new({ item: "Separator" }),
-      // Delete 不设 accelerator：让 xyflow 的 Backspace/Delete 独占按键，避免冲突
+      await MenuItem.new({ text: "Select All (⌘A)", action: () => selectAll() }),
+      await PredefinedMenuItem.new({ item: "Separator" }),
+      // Delete 不设 accelerator：让 xyflow 的 Backspace/Delete 独占按键
       await MenuItem.new({
         text: "Delete",
         action: () => deleteNodes(useEditorStore.getState().view.selected),

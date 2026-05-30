@@ -7,6 +7,7 @@ import { initMenu } from "./services/menuService";
 import { showError } from "./services/notify";
 import { initCloseGuard } from "./services/windowService";
 import { PropertiesPanel } from "./ui/PropertiesPanel";
+import { CanvasShortcuts } from "./ui/CanvasShortcuts";
 import { ShapePalette } from "./ui/ShapePalette";
 import { TitleSync } from "./ui/TitleSync";
 import { Toolbar } from "./ui/Toolbar";
@@ -38,6 +39,7 @@ export default function App() {
   return (
     <div className="layout">
       <TitleSync />
+      <CanvasShortcuts />
       <Toolbar />
       <div className="workspace">
         <ShapePalette />

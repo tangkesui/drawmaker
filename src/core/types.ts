@@ -26,6 +26,8 @@ export interface DmNode {
   id: string;
   kind: NodeKind;
   position: { x: number; y: number };
+  /** resize 后的尺寸；缺省回落注册表 defaultSize（旧 .dm 无此字段照常加载）。 */
+  size?: { width: number; height: number };
   data: NodeData;
 }
 

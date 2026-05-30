@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
-import { renameNode } from "../../core/operations";
+import { Handle, NodeResizer, Position, type Node, type NodeProps } from "@xyflow/react";
+import { renameNode, resizeNode } from "../../core/operations";
 import type { NodeData } from "../../core/types";
 import { getShape } from "./registry";
 import "./shapes.css";
 
 const handleStyle = { width: 8, height: 8 };
 
-/** 通用节点：形状几何来自注册表（props.type 决定），label 双击可编辑。 */
-export function ShapeNode({ id, type, data, selected }: NodeProps<Node<NodeData>>) {
+/** 通用节点：形状几何来自注册表（props.type 决定），尺寸来自 props（可 resize），label 双击可编辑。 */
+export function ShapeNode({ id, type, data, selected, width, height }: NodeProps<Node<NodeData>>) {
   const def = getShape(type ?? "rect");
-  const { width: w, height: h } = def.defaultSize;
+  const w = typeof width === "number" ? width : def.defaultSize.width;
+  const h = typeof height === "number" ? height : def.defaultSize.height;
 
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(data.label);
@@ -40,6 +41,12 @@ export function ShapeNode({ id, type, data, selected }: NodeProps<Node<NodeData>
       style={{ width: w, height: h }}
       onDoubleClick={() => setEditing(true)}
     >
+      <NodeResizer
+        isVisible={selected}
+        minWidth={40}
+        minHeight={32}
+        onResizeEnd={(_e, p) => resizeNode(id, { width: p.width, height: p.height })}
+      />
       <svg className="shape-geom" width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={geomStyle}>
         {def.render(w, h)}
       </svg>

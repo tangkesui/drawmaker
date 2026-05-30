@@ -23,7 +23,7 @@ import { addNode, connectNodes, deleteEdges, deleteNodes, moveNodes } from "../c
 import type { DmEdge, DmNode, NodeData } from "../core/types";
 import { registerExportSource } from "./export";
 import { registerPlacement } from "./placement";
-import { allShapes } from "./shapes/registry";
+import { allShapes, getShape } from "./shapes/registry";
 import { ShapeNode } from "./shapes/ShapeNode";
 import { registerViewportControls } from "./viewport-controls";
 
@@ -34,7 +34,16 @@ type FlowEdge = Edge;
 const nodeTypes = Object.fromEntries(allShapes().map((s) => [s.kind, ShapeNode]));
 
 function toFlowNode(n: DmNode, selected: boolean): FlowNode {
-  return { id: n.id, type: n.kind, position: n.position, data: n.data, selected };
+  const size = n.size ?? getShape(n.kind).defaultSize;
+  return {
+    id: n.id,
+    type: n.kind,
+    position: n.position,
+    data: n.data,
+    selected,
+    width: size.width,
+    height: size.height,
+  };
 }
 
 function toFlowEdge(e: DmEdge): FlowEdge {
@@ -50,6 +59,7 @@ function toFlowEdge(e: DmEdge): FlowEdge {
 function CanvasInner() {
   const docNodes = useEditorStore((s) => s.doc.nodes);
   const docEdges = useEditorStore((s) => s.doc.edges);
+  const viewSelected = useEditorStore((s) => s.view.selected);
   const rf = useReactFlow();
   const { screenToFlowPosition } = rf;
 
@@ -89,6 +99,24 @@ function CanvasInner() {
   useEffect(() => {
     setEdges(docEdges.map(toFlowEdge));
   }, [docEdges]);
+
+  // 程序化选区（selectAll / 粘贴后选中）：view.selected → 本地节点 selected。
+  // 仅在与当前不一致时更新，避免与 onSelectionChange 形成回环。
+  useEffect(() => {
+    const set = new Set(viewSelected);
+    setNodes((nds) => {
+      let changed = false;
+      const next = nds.map((n) => {
+        const sel = set.has(n.id);
+        if (Boolean(n.selected) !== sel) {
+          changed = true;
+          return { ...n, selected: sel };
+        }
+        return n;
+      });
+      return changed ? next : nds;
+    });
+  }, [viewSelected]);
 
   // onNodesChange / onEdgesChange 只更新本地瞬态（拖拽、选区高亮），不入 history。
   const onNodesChange = useCallback((changes: NodeChange<FlowNode>[]) => {

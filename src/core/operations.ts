@@ -1,5 +1,7 @@
-import type { NodeData, NodeKind } from "./types";
+import type { DmEdge, DmNode, NodeData, NodeKind } from "./types";
+import { getClipboard, setClipboard } from "./clipboard";
 import { commit } from "./history";
+import { useEditorStore } from "./store";
 
 /**
  * 领域操作 = `commit()` 的调用点。
@@ -81,4 +83,82 @@ export function connectNodes(
     d.edges.push({ id, source, target, sourceHandle: sourceHandle ?? null, targetHandle: targetHandle ?? null });
   });
   return id;
+}
+
+/** resize 后提交节点尺寸（一条 command）。 */
+export function resizeNode(id: string, size: { width: number; height: number }): void {
+  commit("resize", (d) => {
+    const n = d.nodes.find((x) => x.id === id);
+    if (n) n.size = size;
+  });
+}
+
+// ---- 选区 / 剪贴板 / 再制 ----
+
+function setSelected(ids: string[]): void {
+  useEditorStore.setState((s) => ({ view: { ...s.view, selected: ids } }));
+}
+
+export function selectAll(): void {
+  setSelected(useEditorStore.getState().doc.nodes.map((n) => n.id));
+}
+
+/** 当前选区里：选中节点 + 两端都在选区内的边。 */
+function selectionSubgraph(): { nodes: DmNode[]; edges: DmEdge[] } {
+  const { doc, view } = useEditorStore.getState();
+  const sel = new Set(view.selected);
+  return {
+    nodes: doc.nodes.filter((n) => sel.has(n.id)),
+    edges: doc.edges.filter((e) => sel.has(e.source) && sel.has(e.target)),
+  };
+}
+
+export function copySelection(): void {
+  const { nodes, edges } = selectionSubgraph();
+  if (nodes.length === 0) return;
+  setClipboard({ nodes: nodes.map((n) => structuredClone(n)), edges: edges.map((e) => structuredClone(e)) });
+}
+
+export function cutSelection(): void {
+  const ids = useEditorStore.getState().view.selected;
+  copySelection();
+  deleteNodes(ids);
+}
+
+const PASTE_OFFSET = 24;
+
+/** 把一组节点/边以新 id、偏移后放入文档，整批一条 command，并选中新副本。 */
+function placeCopies(srcNodes: DmNode[], srcEdges: DmEdge[], label: string): void {
+  if (srcNodes.length === 0) return;
+  const idMap = new Map<string, string>();
+  const newNodes = srcNodes.map((n) => {
+    const id = nextId("n");
+    idMap.set(n.id, id);
+    const clone = structuredClone(n);
+    return {
+      ...clone,
+      id,
+      position: { x: n.position.x + PASTE_OFFSET, y: n.position.y + PASTE_OFFSET },
+    };
+  });
+  const newEdges = srcEdges.map((e) => {
+    const clone = structuredClone(e);
+    return { ...clone, id: nextId("e"), source: idMap.get(e.source)!, target: idMap.get(e.target)! };
+  });
+
+  setSelected(newNodes.map((n) => n.id));
+  commit(label, (d) => {
+    d.nodes.push(...newNodes);
+    d.edges.push(...newEdges);
+  });
+}
+
+export function pasteClipboard(): void {
+  const clip = getClipboard();
+  if (clip) placeCopies(clip.nodes, clip.edges, "paste");
+}
+
+export function duplicateSelection(): void {
+  const { nodes, edges } = selectionSubgraph();
+  placeCopies(nodes, edges, "duplicate");
 }
