@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { updateNodeStyle } from "../core/operations";
 import { useEditorStore } from "../core/store";
 import type { NodeData } from "../core/types";
@@ -6,7 +7,10 @@ import "./properties-panel.css";
 export function PropertiesPanel() {
   const selected = useEditorStore((s) => s.view.selected);
   const nodes = useEditorStore((s) => s.doc.nodes);
-  const sel = nodes.filter((n) => selected.includes(n.id));
+  const sel = useMemo(() => {
+    const ids = new Set(selected);
+    return nodes.filter((n) => ids.has(n.id));
+  }, [nodes, selected]);
 
   if (sel.length === 0) {
     return <aside className="props-panel props-empty">未选中节点</aside>;

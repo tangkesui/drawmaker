@@ -9,7 +9,11 @@ import type { DmDocument, History, ViewState } from "./types";
  *
  * doc 的所有变更都走 `history.commit()`（见 history.ts），不直接 setState。
  */
-/** 文件状态。dirty 不单独存，由 history.cursor !== file.savedCursor 派生。 */
+/**
+ * 文件状态。dirty 不单独存，由 history.cursor !== file.savedCursor 派生。
+ * savedCursor 可能被 commit() 置为 SAVED_CURSOR_UNREACHABLE（保存点被截断/裁剪），
+ * 此时 dirty 恒为 true，直到下次保存。
+ */
 export interface FileState {
   currentPath: string | null;
   savedCursor: number;

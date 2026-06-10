@@ -1,4 +1,4 @@
-import { useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useMemo, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { placeShapeAt } from "../canvas/placement";
 import { shapesByCategory, type ShapeDef } from "../canvas/shapes/registry";
 import "../canvas/shapes/shapes.css";
@@ -55,12 +55,16 @@ export function ShapePalette() {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const q = query.trim().toLowerCase();
-  const groups = shapesByCategory()
-    .map((g) => ({
-      category: g.category,
-      shapes: q ? g.shapes.filter((s) => s.label.toLowerCase().includes(q)) : g.shapes,
-    }))
-    .filter((g) => g.shapes.length > 0);
+  const groups = useMemo(
+    () =>
+      shapesByCategory()
+        .map((g) => ({
+          category: g.category,
+          shapes: q ? g.shapes.filter((s) => s.label.toLowerCase().includes(q)) : g.shapes,
+        }))
+        .filter((g) => g.shapes.length > 0),
+    [q],
+  );
 
   const toggle = (c: string) => setCollapsed((prev) => ({ ...prev, [c]: !prev[c] }));
 

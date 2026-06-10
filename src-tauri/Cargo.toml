@@ -1,6 +1,6 @@
 [package]
 name = "drawmaker"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local-first, lightweight, customizable diagram editor for macOS"
 authors = ["tangkesui"]
 edition = "2021"
