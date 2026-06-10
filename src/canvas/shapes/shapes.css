@@ -12,12 +12,12 @@
   stroke-width: 1.5;
 }
 
+/* 选中态只用描边表达，不用 CSS filter：
+   WKWebView 对带 filter 的元素在父级 transform 拖动时旧区域失效不彻底，
+   会沿拖拽路径留下整个节点的残影（2026-06-10 实测）。 */
 .shape-node.is-selected .shape-geom {
   stroke: #2f6fed;
-}
-
-.shape-node.is-selected {
-  filter: drop-shadow(0 0 2px rgba(47, 111, 237, 0.45));
+  stroke-width: 2;
 }
 
 .shape-label {
