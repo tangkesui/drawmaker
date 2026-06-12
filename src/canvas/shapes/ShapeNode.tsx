@@ -15,7 +15,7 @@ export function ShapeNode({ id, type, data, selected, width, height }: NodeProps
 
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(data.label);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     setText(data.label);
@@ -65,7 +65,7 @@ export function ShapeNode({ id, type, data, selected, width, height }: NodeProps
       <Handle type="source" position={Position.Left} id="l" style={handleStyle} />
 
       {editing ? (
-        <input
+        <textarea
           ref={inputRef}
           className="shape-label-input nodrag"
           style={data.fontSize ? { fontSize: data.fontSize } : undefined}
@@ -74,7 +74,11 @@ export function ShapeNode({ id, type, data, selected, width, height }: NodeProps
           onBlur={commit}
           onKeyDown={(e) => {
             e.stopPropagation();
-            if (e.key === "Enter") commit();
+            // Enter 换行（textarea 默认行为）；Cmd/Ctrl+Enter 提交，Esc 取消。
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              commit();
+            }
             if (e.key === "Escape") {
               setText(data.label);
               setEditing(false);
