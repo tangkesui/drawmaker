@@ -1,4 +1,4 @@
-import type { DmEdge, DmNode, NodeData, NodeKind } from "./types";
+import type { DmDocument, DmEdge, DmNode, EdgeData, NodeData, NodeKind } from "./types";
 import { getClipboard, setClipboard } from "./clipboard";
 import { commit } from "./history";
 import { useEditorStore } from "./store";
@@ -32,6 +32,31 @@ export function renameNode(id: string, label: string): void {
     const n = d.nodes.find((x) => x.id === id);
     if (n) n.data.label = label;
   });
+}
+
+/**
+ * 把 patch 合并进边的 data，并按字段剪枝默认值，保持 .dm 干净：
+ * 空 label、arrow="end"（=缺省）都从 data 删除；data 变空则删掉整个 data。
+ */
+function applyEdgeData(d: DmDocument, ids: Set<string>, patch: Partial<EdgeData>): void {
+  for (const e of d.edges) {
+    if (!ids.has(e.id)) continue;
+    const next: EdgeData = { ...e.data, ...patch };
+    if (!next.label) delete next.label;
+    if (!next.arrow || next.arrow === "end") delete next.arrow;
+    if (Object.keys(next).length === 0) delete e.data;
+    else e.data = next;
+  }
+}
+
+export function renameEdge(id: string, label: string): void {
+  commit("rename edge", (d) => applyEdgeData(d, new Set([id]), { label }));
+}
+
+/** 改一批边的样式（目前是箭头方向），一条 command。 */
+export function updateEdgeStyle(ids: string[], patch: Partial<EdgeData>): void {
+  if (ids.length === 0) return;
+  commit("edge style", (d) => applyEdgeData(d, new Set(ids), patch));
 }
 
 /** 改多个节点的样式/标签，一条 command。patch 里 undefined 的字段不动。 */
@@ -83,6 +108,22 @@ export function connectNodes(
     d.edges.push({ id, source, target, sourceHandle: sourceHandle ?? null, targetHandle: targetHandle ?? null });
   });
   return id;
+}
+
+/** 重连：把边的某一端拖到新的节点/连接桩。conn 来自 xyflow 的 Connection（在 Canvas 边界转入）。 */
+export function reconnectEdge(
+  id: string,
+  conn: { source: string | null; target: string | null; sourceHandle?: string | null; targetHandle?: string | null },
+): void {
+  if (!conn.source || !conn.target) return;
+  commit("reconnect edge", (d) => {
+    const e = d.edges.find((x) => x.id === id);
+    if (!e) return;
+    e.source = conn.source!;
+    e.target = conn.target!;
+    e.sourceHandle = conn.sourceHandle ?? null;
+    e.targetHandle = conn.targetHandle ?? null;
+  });
 }
 
 /** resize 后提交节点尺寸（一条 command）。 */

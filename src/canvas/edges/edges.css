@@ -1,0 +1,49 @@
+/* EdgeLabelRenderer 层默认 pointer-events:none，标签要接双击/输入，自己开回来。 */
+.edge-label-wrap {
+  position: absolute;
+  pointer-events: all;
+}
+
+/* 白底盖住底下的线，标签可读（draw.io 同款做法）。 */
+.edge-label {
+  display: block;
+  max-width: 160px;
+  padding: 1px 4px;
+  font-size: 12px;
+  color: #1f2933;
+  text-align: center;
+  background: #ffffff;
+  border-radius: 3px;
+  user-select: none;
+}
+
+.edge-label-input {
+  width: 96px;
+  padding: 2px 4px;
+  font-size: 12px;
+  text-align: center;
+  border: none;
+  border-radius: 3px;
+  outline: 1.5px solid #2f6fed;
+  background: #ffffff;
+}
+
+/* 连线默认深灰（盖掉 xyflow 默认的浅灰 #b1b1b7），与节点描边同色系 */
+.react-flow__edge-path {
+  stroke: #5b6b7b;
+  stroke-width: 1.5;
+}
+
+/* 选中边用应用统一的选中蓝并加粗 */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #2f6fed;
+  stroke-width: 2;
+}
+
+/* 重连锚点（透明可拖，xyflow 默认 cursor:move）。选中边时显示成小蓝点，提示端点可拖动改接。 */
+.react-flow__edge.selected .react-flow__edgeupdater {
+  fill: #2f6fed;
+  stroke: #ffffff;
+  stroke-width: 1.5;
+  r: 4;
+}

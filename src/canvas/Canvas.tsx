@@ -5,6 +5,7 @@ import {
   Background,
   ConnectionMode,
   Controls,
+  MarkerType,
   MiniMap,
   ReactFlow,
   ReactFlowProvider,
@@ -12,6 +13,7 @@ import {
   type Connection,
   type Edge,
   type EdgeChange,
+  type EdgeMarker,
   type Node,
   type NodeChange,
   type OnSelectionChangeParams,
@@ -19,8 +21,9 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import { useEditorStore } from "../core/store";
-import { addNode, connectNodes, deleteEdges, deleteNodes, moveNodes } from "../core/operations";
+import { addNode, connectNodes, deleteEdges, deleteNodes, moveNodes, reconnectEdge } from "../core/operations";
 import type { DmEdge, DmNode, NodeData } from "../core/types";
+import { LabeledEdge, type LabeledEdgeData } from "./edges/LabeledEdge";
 import { registerExportSource } from "./export";
 import { registerPlacement } from "./placement";
 import { allShapes, getShape } from "./shapes/registry";
@@ -28,10 +31,11 @@ import { ShapeNode } from "./shapes/ShapeNode";
 import { registerViewportControls } from "./viewport-controls";
 
 type FlowNode = Node<NodeData>;
-type FlowEdge = Edge;
+type FlowEdge = Edge<LabeledEdgeData>;
 
 // 所有形状共用通用 ShapeNode；具体形状由节点 type（=kind）在 ShapeNode 内查注册表决定。
 const nodeTypes = Object.fromEntries(allShapes().map((s) => [s.kind, ShapeNode]));
+const edgeTypes = { labeled: LabeledEdge };
 
 function toFlowNode(n: DmNode, selected: boolean): FlowNode {
   const size = n.size ?? getShape(n.kind).defaultSize;
@@ -47,13 +51,36 @@ function toFlowNode(n: DmNode, selected: boolean): FlowNode {
   };
 }
 
-function toFlowEdge(e: DmEdge): FlowEdge {
+const EDGE_COLOR = "#5b6b7b";
+const ARROW_MARKER: EdgeMarker = { type: MarkerType.ArrowClosed, width: 18, height: 18, color: EDGE_COLOR };
+
+function toFlowEdge(
+  e: DmEdge,
+  editing: boolean,
+  selected: boolean,
+  setEdgeEditing: (id: string, editing: boolean) => void,
+): FlowEdge {
+  // arrow 缺省 = "end"（默认 A→B 终点箭头）；"none" 才无箭头。
+  const arrow = e.data?.arrow ?? "end";
   return {
     id: e.id,
+    type: "labeled",
+    // 边 wrapper 默认没有 nopan（节点有），不挂的话双击边改字会同时触发 d3 dblclick 缩放
+    className: "nopan",
     source: e.source,
     target: e.target,
     sourceHandle: e.sourceHandle ?? undefined,
     targetHandle: e.targetHandle ?? undefined,
+    selected,
+    // 描边色/选中蓝走 edges.css（让 xyflow 自加的 .selected class 实时生效，不靠重建）；
+    // 这里只挂 marker（marker 必须在 edge 对象上声明，xyflow 才会生成 def）。
+    markerEnd: arrow === "end" || arrow === "both" ? ARROW_MARKER : undefined,
+    markerStart: arrow === "start" || arrow === "both" ? ARROW_MARKER : undefined,
+    data: {
+      label: e.data?.label ?? "",
+      editing,
+      onEditingChange: (on: boolean) => setEdgeEditing(e.id, on),
+    },
   };
 }
 
@@ -91,6 +118,12 @@ function CanvasInner() {
   const [nodes, setNodes] = useState<FlowNode[]>([]);
   const [edges, setEdges] = useState<FlowEdge[]>([]);
 
+  // 正在改字的边 id（view 瞬态，不入 history）。双击进入，提交/取消退出。
+  const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null);
+  const setEdgeEditing = useCallback((id: string, editing: boolean) => {
+    setEditingEdgeId((cur) => (editing ? id : cur === id ? null : cur));
+  }, []);
+
   // store → 本地。doc 变化时重建；selection 从 view.selected 取，避免重建丢选区。
   useEffect(() => {
     const sel = new Set(useEditorStore.getState().view.selected);
@@ -98,8 +131,10 @@ function CanvasInner() {
   }, [docNodes]);
 
   useEffect(() => {
-    setEdges(docEdges.map(toFlowEdge));
-  }, [docEdges]);
+    // 选区从 view.selectedEdges 读，避免重建（editingEdgeId 变化）时丢高亮。
+    const selEdges = new Set(useEditorStore.getState().view.selectedEdges);
+    setEdges(docEdges.map((e) => toFlowEdge(e, e.id === editingEdgeId, selEdges.has(e.id), setEdgeEditing)));
+  }, [docEdges, editingEdgeId, setEdgeEditing]);
 
   // 程序化选区（selectAll / 粘贴后选中）：view.selected → 本地节点 selected。
   // 仅在与当前不一致时更新，避免与 onSelectionChange 形成回环。
@@ -147,16 +182,28 @@ function CanvasInner() {
     }
   }, []);
 
+  // 重连：拖边端点到新连接桩。提供 onReconnect 即启用端点锚点（edgesReconnectable 默认 true）。
+  const onReconnect = useCallback((oldEdge: FlowEdge, c: Connection) => {
+    reconnectEdge(oldEdge.id, c);
+  }, []);
+
   const onSelectionChange = useCallback((p: OnSelectionChangeParams) => {
     const selected = p.nodes.map((n) => n.id);
-    useEditorStore.setState((s) => ({ view: { ...s.view, selected } }));
+    const selectedEdges = p.edges.map((e) => e.id);
+    useEditorStore.setState((s) => ({ view: { ...s.view, selected, selectedEdges } }));
   }, []);
+
+  const onEdgeDoubleClick = useCallback(
+    (_e: React.MouseEvent, edge: FlowEdge) => setEdgeEditing(edge.id, true),
+    [setEdgeEditing],
+  );
 
   return (
     <ReactFlow
       nodes={nodes}
       edges={edges}
       nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
       connectionMode={ConnectionMode.Loose}
       deleteKeyCode={["Backspace", "Delete"]}
       onNodesChange={onNodesChange}
@@ -165,7 +212,9 @@ function CanvasInner() {
       onNodesDelete={onNodesDelete}
       onEdgesDelete={onEdgesDelete}
       onConnect={onConnect}
+      onReconnect={onReconnect}
       onSelectionChange={onSelectionChange}
+      onEdgeDoubleClick={onEdgeDoubleClick}
       fitView
       proOptions={{ hideAttribution: true }}
     >

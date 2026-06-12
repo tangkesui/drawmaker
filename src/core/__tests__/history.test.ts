@@ -1,6 +1,16 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { createInitialState, useEditorStore } from "../store";
-import { addNode, connectNodes, deleteNodes, moveNodes, updateNodeStyle, __resetIds } from "../operations";
+import {
+  addNode,
+  connectNodes,
+  deleteNodes,
+  moveNodes,
+  reconnectEdge,
+  renameEdge,
+  updateEdgeStyle,
+  updateNodeStyle,
+  __resetIds,
+} from "../operations";
 import { canRedo, canUndo, commit, MAX_HISTORY, redo, undo } from "../history";
 
 beforeEach(() => {
@@ -61,6 +71,74 @@ describe("history (patch-based)", () => {
     expect(doc().nodes[0].data.strokeWidth).toBe(3);
     undo();
     expect(doc().nodes[0].data.fill).toBeUndefined();
+  });
+
+  test("renameEdge sets label; undo reverts; empty label clears data", () => {
+    const a = addNode("rect", { x: 0, y: 0 });
+    const b = addNode("ellipse", { x: 100, y: 0 });
+    const eid = connectNodes(a, b);
+
+    renameEdge(eid, "依赖");
+    expect(doc().edges[0].data?.label).toBe("依赖");
+
+    undo();
+    expect(doc().edges[0].data?.label).toBeUndefined();
+    redo();
+    expect(doc().edges[0].data?.label).toBe("依赖");
+
+    renameEdge(eid, "");
+    expect(doc().edges[0].data).toBeUndefined();
+    undo();
+    expect(doc().edges[0].data?.label).toBe("依赖");
+  });
+
+  test("updateEdgeStyle sets arrow; undo reverts; default 'end' is pruned", () => {
+    const a = addNode("rect", { x: 0, y: 0 });
+    const b = addNode("ellipse", { x: 100, y: 0 });
+    const eid = connectNodes(a, b);
+    expect(doc().edges[0].data).toBeUndefined();
+
+    updateEdgeStyle([eid], { arrow: "both" });
+    expect(doc().edges[0].data?.arrow).toBe("both");
+    undo();
+    expect(doc().edges[0].data).toBeUndefined();
+    redo();
+    expect(doc().edges[0].data?.arrow).toBe("both");
+
+    // 设回默认 "end" → 字段剪枝，data 变空删掉
+    updateEdgeStyle([eid], { arrow: "end" });
+    expect(doc().edges[0].data).toBeUndefined();
+
+    // "none" 是显式值，保留
+    updateEdgeStyle([eid], { arrow: "none" });
+    expect(doc().edges[0].data?.arrow).toBe("none");
+  });
+
+  test("clearing label keeps arrow on the same edge", () => {
+    const a = addNode("rect", { x: 0, y: 0 });
+    const b = addNode("ellipse", { x: 100, y: 0 });
+    const eid = connectNodes(a, b);
+    updateEdgeStyle([eid], { arrow: "none" });
+    renameEdge(eid, "标签");
+    expect(doc().edges[0].data).toEqual({ arrow: "none", label: "标签" });
+    renameEdge(eid, "");
+    expect(doc().edges[0].data).toEqual({ arrow: "none" });
+  });
+
+  test("reconnectEdge retargets an edge; undo restores old endpoint", () => {
+    const a = addNode("rect", { x: 0, y: 0 });
+    const b = addNode("ellipse", { x: 100, y: 0 });
+    const c = addNode("rect", { x: 200, y: 0 });
+    const eid = connectNodes(a, b, "r", "l");
+    expect(doc().edges[0]).toMatchObject({ source: a, target: b });
+
+    reconnectEdge(eid, { source: a, target: c, sourceHandle: "r", targetHandle: "t" });
+    expect(doc().edges[0]).toMatchObject({ source: a, target: c, targetHandle: "t" });
+
+    undo();
+    expect(doc().edges[0]).toMatchObject({ source: a, target: b, targetHandle: "l" });
+    redo();
+    expect(doc().edges[0]).toMatchObject({ source: a, target: c });
   });
 
   test("canUndo / canRedo track the cursor", () => {

@@ -1,21 +1,39 @@
 import { useMemo } from "react";
-import { updateNodeStyle } from "../core/operations";
+import { updateEdgeStyle, updateNodeStyle } from "../core/operations";
 import { useEditorStore } from "../core/store";
-import type { NodeData } from "../core/types";
+import type { DmEdge, DmNode, EdgeArrow, NodeData } from "../core/types";
 import "./properties-panel.css";
+
+const ARROW_OPTIONS: { value: EdgeArrow; label: string }[] = [
+  { value: "end", label: "终点 →" },
+  { value: "start", label: "起点 ←" },
+  { value: "both", label: "双向 ↔" },
+  { value: "none", label: "无" },
+];
 
 export function PropertiesPanel() {
   const selected = useEditorStore((s) => s.view.selected);
+  const selectedEdges = useEditorStore((s) => s.view.selectedEdges);
   const nodes = useEditorStore((s) => s.doc.nodes);
+  const edges = useEditorStore((s) => s.doc.edges);
+
   const sel = useMemo(() => {
     const ids = new Set(selected);
     return nodes.filter((n) => ids.has(n.id));
   }, [nodes, selected]);
 
-  if (sel.length === 0) {
-    return <aside className="props-panel props-empty">未选中节点</aside>;
-  }
+  const selEdges = useMemo(() => {
+    const ids = new Set(selectedEdges);
+    return edges.filter((e) => ids.has(e.id));
+  }, [edges, selectedEdges]);
 
+  // 节点优先：同时选中节点和边时显示节点面板。
+  if (sel.length > 0) return <NodePanel sel={sel} selected={selected} />;
+  if (selEdges.length > 0) return <EdgePanel selEdges={selEdges} ids={selectedEdges} />;
+  return <aside className="props-panel props-empty">未选中</aside>;
+}
+
+function NodePanel({ sel, selected }: { sel: DmNode[]; selected: string[] }) {
   // 选中节点在该字段上的共同值；不一致返回 undefined。
   const common = <K extends keyof NodeData>(k: K): NodeData[K] | undefined => {
     const first = sel[0].data[k];
@@ -82,6 +100,34 @@ export function PropertiesPanel() {
             if (Number.isFinite(v) && v !== dFont) apply({ fontSize: v });
           }}
         />
+      </label>
+    </aside>
+  );
+}
+
+function EdgePanel({ selEdges, ids }: { selEdges: DmEdge[]; ids: string[] }) {
+  // arrow 缺省 = "end"；选区内不一致时下拉显示「多种」占位。
+  const arrows = selEdges.map((e) => e.data?.arrow ?? "end");
+  const common = arrows.every((a) => a === arrows[0]) ? arrows[0] : "";
+
+  return (
+    <aside className="props-panel">
+      <div className="props-title">{selEdges.length === 1 ? "连线属性" : `${selEdges.length} 条连线`}</div>
+
+      <label className="props-row">
+        <span>箭头</span>
+        <select value={common} onChange={(e) => updateEdgeStyle(ids, { arrow: e.target.value as EdgeArrow })}>
+          {common === "" && (
+            <option value="" disabled>
+              多种
+            </option>
+          )}
+          {ARROW_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
       </label>
     </aside>
   );

@@ -5,7 +5,16 @@ import type { DmDocument } from "../types";
 const sample: DmDocument = {
   version: 1,
   nodes: [{ id: "n_1", kind: "rect", position: { x: 10, y: 20 }, data: { label: "A" } }],
-  edges: [{ id: "e_1", source: "n_1", target: "n_1", sourceHandle: null, targetHandle: null }],
+  edges: [
+    {
+      id: "e_1",
+      source: "n_1",
+      target: "n_1",
+      sourceHandle: null,
+      targetHandle: null,
+      data: { label: "调用", arrow: "both" },
+    },
+  ],
   meta: { title: "Sample" },
 };
 

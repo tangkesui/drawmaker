@@ -31,12 +31,24 @@ export interface DmNode {
   data: NodeData;
 }
 
+/** 箭头方向：缺省（undefined）= "end"，即默认 A→B 终点箭头。 */
+export type EdgeArrow = "none" | "end" | "start" | "both";
+
+// 同 NodeData 用 type alias（xyflow Edge<T> 的 Record 约束）。字段全 optional：
+// 旧 .dm 无 data 字段照常加载。
+export type EdgeData = {
+  label?: string;
+  arrow?: EdgeArrow;
+};
+
 export interface DmEdge {
   id: string;
   source: string;
   target: string;
   sourceHandle?: string | null;
   targetHandle?: string | null;
+  /** 边标签等附加数据；缺省 = 无标签。 */
+  data?: EdgeData;
 }
 
 export interface DocumentMeta {
@@ -53,6 +65,7 @@ export interface DmDocument {
 /** View state — 不入 history（hover / 缩放 / 选区）。形状放置走调色板拖放，无工具模式。 */
 export interface ViewState {
   selected: string[];
+  selectedEdges: string[];
   viewport: { x: number; y: number; zoom: number };
   hoverId: string | null;
 }
