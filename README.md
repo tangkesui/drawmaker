@@ -45,3 +45,25 @@ pnpm tauri build
   - 命令行去掉隔离属性：`xattr -dr com.apple.quarantine /Applications/drawmaker.app`
 
 > 如果将来要分发给别人 / 消除警告，需要 Apple Developer 账号（$99/年）做 Developer ID 签名 + 公证；届时再在 `tauri.conf.json` 填 `signingIdentity` 并配公证环境变量。
+
+## 发布流程（版本管理）
+
+dmg 是构建副产物（不进 git、同版本覆盖），正式版本靠 **tag + Release** 管理,GitHub / forgejo 双端各存一份:
+
+```bash
+# 1. 三处版本号一致:package.json / src-tauri/tauri.conf.json / src-tauri/Cargo.toml
+pnpm check && pnpm test && pnpm tauri build
+
+# 2. 打 tag 并推两端
+git tag -a v<版本> -m "<一句话>"
+git push origin main --tags && git push forgejo main --tags
+
+# 3. GitHub Release(挂 dmg)
+gh release create v<版本> src-tauri/target/release/bundle/dmg/drawmaker_<版本>_aarch64.dmg \
+  --title "drawmaker v<版本>" --notes "<说明>"
+
+# 4. forgejo Release:POST /api/v1/repos/<user>/drawmaker/releases 建 release,
+#    再 POST .../releases/<id>/assets 传 dmg(凭据见 ~/.credentials/forgejo/)
+```
+
+历史版本随时可下载,或 `git checkout v<版本> && pnpm tauri build` 重建。
