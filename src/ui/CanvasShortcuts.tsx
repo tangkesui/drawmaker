@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { copySelection, cutSelection, pasteClipboard } from "../core/clipboard-actions";
 import { duplicateSelection, selectAll } from "../core/operations";
+import { groupControls } from "../canvas/group-controls";
 
 /** 复制/剪切/粘贴走系统剪贴板（异步）；keydown 里 fire-and-forget，吞掉偶发 IO 异常。 */
 const fire = (p: Promise<unknown>) => void p.catch(() => {});
@@ -43,6 +44,11 @@ export function CanvasShortcuts() {
         case "KeyA":
           e.preventDefault();
           selectAll();
+          break;
+        case "KeyG":
+          e.preventDefault();
+          if (e.shiftKey) groupControls.ungroup();
+          else groupControls.group();
           break;
       }
     };

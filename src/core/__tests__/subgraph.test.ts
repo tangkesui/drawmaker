@@ -1,5 +1,13 @@
 import { describe, expect, test } from "vitest";
-import { absolutePos, childIds, nodeMap, subtreeIds, toRelative, SUBGRAPH_KIND } from "../subgraph";
+import {
+  absolutePos,
+  childIds,
+  nodeMap,
+  orderParentFirst,
+  subtreeIds,
+  toRelative,
+  SUBGRAPH_KIND,
+} from "../subgraph";
 import type { DmNode } from "../types";
 
 const node = (id: string, x: number, y: number, parentId?: string, kind = "rect"): DmNode => ({
@@ -50,6 +58,12 @@ describe("subgraph 坐标换算 + 子树", () => {
   test("childIds 只取直接子级", () => {
     expect(childIds("G1", nodes).sort()).toEqual(["B", "G2"]);
     expect(childIds("G2", nodes)).toEqual(["A"]);
+  });
+
+  test("orderParentFirst：父排子前，同层稳定", () => {
+    // 故意把子节点放前面
+    const unordered: DmNode[] = [node("A", 0, 0, "G2"), node("G2", 0, 0, "G1", SUBGRAPH_KIND), node("G1", 0, 0)];
+    expect(orderParentFirst(unordered).map((n) => n.id)).toEqual(["G1", "G2", "A"]);
   });
 
   test("防环：parentId 成环不死循环", () => {

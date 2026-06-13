@@ -63,3 +63,23 @@ export function subtreeIds(rootId: string, nodes: DmNode[]): Set<string> {
 export function childIds(parentId: string, nodes: DmNode[]): string[] {
   return nodes.filter((n) => n.parentId === parentId).map((n) => n.id);
 }
+
+/** 按层级深度稳定排序，父排子前（xyflow 要求父节点先于子节点）。 */
+export function orderParentFirst(nodes: DmNode[]): DmNode[] {
+  const byId = nodeMap(nodes);
+  const depthOf = (n: DmNode): number => {
+    let d = 0;
+    const seen = new Set<string>([n.id]);
+    let p = n.parentId ? byId.get(n.parentId) : undefined;
+    while (p && !seen.has(p.id)) {
+      seen.add(p.id);
+      d += 1;
+      p = p.parentId ? byId.get(p.parentId) : undefined;
+    }
+    return d;
+  };
+  return nodes
+    .map((n, i) => ({ n, i, d: depthOf(n) }))
+    .sort((a, b) => a.d - b.d || a.i - b.i)
+    .map((x) => x.n);
+}

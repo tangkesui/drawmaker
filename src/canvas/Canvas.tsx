@@ -7,6 +7,7 @@ import {
   Controls,
   MarkerType,
   MiniMap,
+  getNodesBounds,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
@@ -29,12 +30,16 @@ import {
   deleteEdges,
   deleteNodes,
   duplicateSelection,
+  groupNodes,
   moveNodes,
   reconnectEdge,
+  ungroupNodes,
 } from "../core/operations";
+import { orderParentFirst, SUBGRAPH_KIND } from "../core/subgraph";
 import type { DmEdge, DmNode, NodeData } from "../core/types";
 import { LabeledEdge, type LabeledEdgeData } from "./edges/LabeledEdge";
 import { getHelperLines, type HelperLines } from "./helper-lines";
+import { registerGroupControls } from "./group-controls";
 import "./context-menu.css";
 
 type ContextMenuState = { x: number; y: number; kind: "node" } | { x: number; y: number; kind: "edge"; edgeId: string };
@@ -42,13 +47,17 @@ import { registerExportSource } from "./export";
 import { registerPlacement } from "./placement";
 import { allShapes, getShape } from "./shapes/registry";
 import { ShapeNode } from "./shapes/ShapeNode";
+import { SubgraphNode } from "./shapes/SubgraphNode";
 import { registerViewportControls } from "./viewport-controls";
 
 type FlowNode = Node<NodeData>;
 type FlowEdge = Edge<LabeledEdgeData>;
 
-// 所有形状共用通用 ShapeNode；具体形状由节点 type（=kind）在 ShapeNode 内查注册表决定。
-const nodeTypes = Object.fromEntries(allShapes().map((s) => [s.kind, ShapeNode]));
+// 所有形状共用通用 ShapeNode；分组容器用 SubgraphNode。
+const nodeTypes = {
+  ...Object.fromEntries(allShapes().map((s) => [s.kind, ShapeNode])),
+  [SUBGRAPH_KIND]: SubgraphNode,
+};
 const edgeTypes = { labeled: LabeledEdge };
 
 function toFlowNode(n: DmNode, selected: boolean): FlowNode {
@@ -58,6 +67,7 @@ function toFlowNode(n: DmNode, selected: boolean): FlowNode {
   return {
     id: n.id,
     type: n.kind,
+    ...(n.parentId ? { parentId: n.parentId } : {}),
     position: n.position,
     data: n.data,
     selected,
@@ -152,9 +162,10 @@ function CanvasInner() {
   const closeMenu = useCallback(() => setContextMenu(null), []);
 
   // store → 本地。doc 变化时重建；selection 从 view.selected 取，避免重建丢选区。
+  // orderParentFirst：xyflow 要求父节点排在子节点之前。
   useEffect(() => {
     const sel = new Set(useEditorStore.getState().view.selected);
-    setNodes(docNodes.map((n) => toFlowNode(n, sel.has(n.id))));
+    setNodes(orderParentFirst(docNodes).map((n) => toFlowNode(n, sel.has(n.id))));
   }, [docNodes]);
 
   useEffect(() => {
@@ -257,6 +268,31 @@ function CanvasInner() {
     [screenToFlowPosition],
   );
 
+  // 编组：选中的顶层节点 → 包围框（含标题栏 + padding）→ groupNodes。解组：选中的容器。
+  const doGroup = useCallback(() => {
+    const sel = useEditorStore.getState().view.selected;
+    const picked = rf.getNodes().filter((n) => sel.includes(n.id) && !n.parentId && n.type !== SUBGRAPH_KIND);
+    if (picked.length < 1) return;
+    const b = getNodesBounds(picked);
+    const pad = 20;
+    const titleH = 26;
+    groupNodes(picked.map((n) => n.id), {
+      x: b.x - pad,
+      y: b.y - pad - titleH,
+      width: b.width + pad * 2,
+      height: b.height + pad * 2 + titleH,
+    });
+  }, [rf]);
+
+  const doUngroup = useCallback(() => {
+    const { doc, view } = useEditorStore.getState();
+    for (const id of view.selected) {
+      if (doc.nodes.find((n) => n.id === id)?.kind === SUBGRAPH_KIND) ungroupNodes(id);
+    }
+  }, []);
+
+  useEffect(() => registerGroupControls({ group: doGroup, ungroup: doUngroup }), [doGroup, doUngroup]);
+
   // 右键节点：若不在选区则先选中它，再弹菜单（再制/删除作用于选区）。
   const onNodeContextMenu = useCallback((e: React.MouseEvent, node: FlowNode) => {
     e.preventDefault();
@@ -325,6 +361,22 @@ function CanvasInner() {
                   }}
                 >
                   再制
+                </button>
+                <button
+                  onClick={() => {
+                    doGroup();
+                    closeMenu();
+                  }}
+                >
+                  编组 ⌘G
+                </button>
+                <button
+                  onClick={() => {
+                    doUngroup();
+                    closeMenu();
+                  }}
+                >
+                  解组 ⌘⇧G
                 </button>
                 <button
                   className="danger"
