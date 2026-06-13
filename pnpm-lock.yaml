@@ -23,6 +23,9 @@ importers:
       dagre:
         specifier: ^0.8.5
         version: 0.8.5
+      elkjs:
+        specifier: ^0.11.1
+        version: 0.11.1
       html-to-image:
         specifier: ^1.11.13
         version: 1.11.13
@@ -1062,6 +1065,9 @@ packages:
 
   electron-to-chromium@1.5.363:
     resolution: {integrity: sha512-VjUKPyWzGnT1fujlkEGC/BvN70Hh70KXtAqcmniXviYlJC/ivcT+BWGPyxWVbJZLfvtKR6dqg1L7T7pgAMBtWA==}
+
+  elkjs@0.11.1:
+    resolution: {integrity: sha512-zxxR9k+rx5ktMwT/FwyLdPCrq7xN6e4VGGHH8hA01vVYKjTFik7nHOxBnAYtrgYUB1RpAiLvA1/U2YraWxyKKg==}
 
   entities@8.0.0:
     resolution: {integrity: sha512-zwfzJecQ/Uej6tusMqwAqU/6KL2XaB2VZ2Jg54Je6ahNBGNH6Ek6g3jjNCF0fG9EWQKGZNddNjU5F1ZQn/sBnA==}
@@ -2451,6 +2457,8 @@ snapshots:
       '@types/trusted-types': 2.0.7
 
   electron-to-chromium@1.5.363: {}
+
+  elkjs@0.11.1: {}
 
   entities@8.0.0: {}
 

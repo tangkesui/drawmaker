@@ -1,5 +1,6 @@
 import { Menu, MenuItem, PredefinedMenuItem, Submenu } from "@tauri-apps/api/menu";
 import { applyAutoLayout } from "../canvas/auto-layout";
+import { applyElkLayout } from "../canvas/elk-layout";
 import { viewport } from "../canvas/viewport-controls";
 import {
   fileName,
@@ -151,6 +152,9 @@ async function buildMenu(): Promise<Menu> {
       await PredefinedMenuItem.new({ item: "Separator" }),
       await MenuItem.new({ text: "Arrange ↓ (纵向)", accelerator: "CmdOrCtrl+L", action: () => applyAutoLayout("TB") }),
       await MenuItem.new({ text: "Arrange → (横向)", accelerator: "CmdOrCtrl+Shift+L", action: () => applyAutoLayout("LR") }),
+      await PredefinedMenuItem.new({ item: "Separator" }),
+      await MenuItem.new({ text: "正交布局 ↓ (elk)", action: run(() => applyElkLayout("DOWN")) }),
+      await MenuItem.new({ text: "正交布局 → (elk)", action: run(() => applyElkLayout("RIGHT")) }),
     ],
   });
 
