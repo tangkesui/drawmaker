@@ -22,10 +22,21 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import { useEditorStore } from "../core/store";
-import { addNode, connectNodes, deleteEdges, deleteNodes, moveNodes, reconnectEdge } from "../core/operations";
+import {
+  addNode,
+  connectNodes,
+  deleteEdges,
+  deleteNodes,
+  duplicateSelection,
+  moveNodes,
+  reconnectEdge,
+} from "../core/operations";
 import type { DmEdge, DmNode, NodeData } from "../core/types";
 import { LabeledEdge, type LabeledEdgeData } from "./edges/LabeledEdge";
 import { getHelperLines, type HelperLines } from "./helper-lines";
+import "./context-menu.css";
+
+type ContextMenuState = { x: number; y: number; kind: "node" } | { x: number; y: number; kind: "edge"; edgeId: string };
 import { registerExportSource } from "./export";
 import { registerPlacement } from "./placement";
 import { allShapes, getShape } from "./shapes/registry";
@@ -135,6 +146,10 @@ function CanvasInner() {
   // 拖动对齐参考线（view 瞬态）。
   const [helperLines, setHelperLines] = useState<HelperLines>({});
 
+  // 右键上下文菜单（view 瞬态）。
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const closeMenu = useCallback(() => setContextMenu(null), []);
+
   // store → 本地。doc 变化时重建；selection 从 view.selected 取，避免重建丢选区。
   useEffect(() => {
     const sel = new Set(useEditorStore.getState().view.selected);
@@ -232,34 +247,99 @@ function CanvasInner() {
     [screenToFlowPosition],
   );
 
+  // 右键节点：若不在选区则先选中它，再弹菜单（再制/删除作用于选区）。
+  const onNodeContextMenu = useCallback((e: React.MouseEvent, node: FlowNode) => {
+    e.preventDefault();
+    const { selected } = useEditorStore.getState().view;
+    if (!selected.includes(node.id)) {
+      useEditorStore.setState((s) => ({ view: { ...s.view, selected: [node.id], selectedEdges: [] } }));
+    }
+    setContextMenu({ x: e.clientX, y: e.clientY, kind: "node" });
+  }, []);
+
+  const onEdgeContextMenu = useCallback((e: React.MouseEvent, edge: FlowEdge) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, kind: "edge", edgeId: edge.id });
+  }, []);
+
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      nodeTypes={nodeTypes}
-      edgeTypes={edgeTypes}
-      connectionMode={ConnectionMode.Loose}
-      deleteKeyCode={["Backspace", "Delete"]}
-      // 双击改用于建节点，关掉默认的双击缩放
-      zoomOnDoubleClick={false}
-      onDoubleClick={onDoubleClick}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onNodeDragStop={onNodeDragStop}
-      onNodesDelete={onNodesDelete}
-      onEdgesDelete={onEdgesDelete}
-      onConnect={onConnect}
-      onReconnect={onReconnect}
-      onSelectionChange={onSelectionChange}
-      onEdgeDoubleClick={onEdgeDoubleClick}
-      fitView
-      proOptions={{ hideAttribution: true }}
-    >
-      <Background />
-      <Controls />
-      <MiniMap pannable zoomable />
-      <HelperLinesOverlay lines={helperLines} />
-    </ReactFlow>
+    <>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        connectionMode={ConnectionMode.Loose}
+        deleteKeyCode={["Backspace", "Delete"]}
+        // 双击改用于建节点，关掉默认的双击缩放
+        zoomOnDoubleClick={false}
+        onDoubleClick={onDoubleClick}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onNodeDragStop={onNodeDragStop}
+        onNodesDelete={onNodesDelete}
+        onEdgesDelete={onEdgesDelete}
+        onConnect={onConnect}
+        onReconnect={onReconnect}
+        onSelectionChange={onSelectionChange}
+        onEdgeDoubleClick={onEdgeDoubleClick}
+        onNodeContextMenu={onNodeContextMenu}
+        onEdgeContextMenu={onEdgeContextMenu}
+        fitView
+        proOptions={{ hideAttribution: true }}
+      >
+        <Background />
+        <Controls />
+        <MiniMap pannable zoomable />
+        <HelperLinesOverlay lines={helperLines} />
+      </ReactFlow>
+
+      {contextMenu && (
+        <>
+          <div
+            className="ctx-backdrop"
+            onClick={closeMenu}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              closeMenu();
+            }}
+          />
+          <div className="ctx-menu" style={{ left: contextMenu.x, top: contextMenu.y }}>
+            {contextMenu.kind === "node" ? (
+              <>
+                <button
+                  onClick={() => {
+                    duplicateSelection();
+                    closeMenu();
+                  }}
+                >
+                  再制
+                </button>
+                <button
+                  className="danger"
+                  onClick={() => {
+                    deleteNodes(useEditorStore.getState().view.selected);
+                    closeMenu();
+                  }}
+                >
+                  删除
+                </button>
+              </>
+            ) : (
+              <button
+                className="danger"
+                onClick={() => {
+                  deleteEdges([contextMenu.edgeId]);
+                  closeMenu();
+                }}
+              >
+                删除连线
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </>
   );
 }
 

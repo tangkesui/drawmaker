@@ -14,7 +14,7 @@
 
 - ~~**拖动对齐参考线 + 吸附**~~ ✅ 已做（2026-06-13）：`canvas/helper-lines.ts` 纯计算（左/右/中 × 上/下/中 对齐，阈值吸附，4 单测）+ Canvas onNodesChange 吸附 + `HelperLinesOverlay` 蓝色参考线。
 - ~~**双击空白画布快速建节点**~~ ✅ 已做（2026-06-13）：Canvas onDoubleClick 仅在 `.react-flow__pane` 上触发 → screenToFlowPosition → addNode("rect")；关掉 zoomOnDoubleClick（双击节点/边改字不受影响）。（落点自动进编辑态待后续）
-- **右键上下文菜单**：复制 / 删除 / 置顶置底 / 锁定 / 复制为 PNG/SVG。
+- ~~**右键上下文菜单**~~ ✅ 已做（2026-06-13）：节点（再制/删除）、连线（删除连线）；onNodeContextMenu/onEdgeContextMenu + 全屏 backdrop 关闭。置顶置底/锁定/复制为 PNG 待后续（z-order 本地、mermaid 无对应）。
 - **Alt 拖拽复制、方向键微移、Shift 约束、框选多选**（xyflow `selectionOnDrag`）。
 - 工具键建形状（按键选形状再点画布落）——可选，调色板拖拽已够用。
 
