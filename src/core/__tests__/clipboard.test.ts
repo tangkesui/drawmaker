@@ -10,6 +10,7 @@ import {
   getSelectionClip,
   groupNodes,
   pasteClip,
+  reparentNode,
   resizeNode,
   selectAll,
   ungroupNodes,
@@ -127,6 +128,20 @@ describe("clipboard / duplicate / select", () => {
     expect(doc().nodes.find((n) => n.id === gid)).toBeUndefined(); // 容器删
     expect(doc().nodes.find((n) => n.id === a)!).toMatchObject({ position: { x: 100, y: 100 } }); // 换回绝对
     expect(doc().nodes.find((n) => n.id === a)!.parentId).toBeUndefined();
+  });
+
+  test("reparentNode：拖进容器 parentId 改 + 位置换相对；拖出回顶层", () => {
+    const a = addNode("rect", { x: 0, y: 0 });
+    const b = addNode("rect", { x: 50, y: 0 });
+    const gid = groupNodes([b], { x: 40, y: 40, width: 200, height: 160 }); // 容器在 (40,40)
+    // a（顶层，绝对 0,0）拖进容器，落点绝对 (60,80)
+    reparentNode(a, gid, { x: 60, y: 80 });
+    expect(doc().nodes.find((n) => n.id === a)!).toMatchObject({ parentId: gid, position: { x: 20, y: 40 } }); // 60-40,80-40
+    // 再拖出到顶层，落点绝对 (300,300)
+    reparentNode(a, undefined, { x: 300, y: 300 });
+    const aNode = doc().nodes.find((n) => n.id === a)!;
+    expect(aNode.parentId).toBeUndefined();
+    expect(aNode.position).toEqual({ x: 300, y: 300 });
   });
 
   test("删容器连带删子树（避免孤儿 parentId）", () => {

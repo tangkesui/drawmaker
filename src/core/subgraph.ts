@@ -64,6 +64,13 @@ export function childIds(parentId: string, nodes: DmNode[]): string[] {
   return nodes.filter((n) => n.parentId === parentId).map((n) => n.id);
 }
 
+/** 节点层级深度（根=0）。 */
+export function nodeDepth(id: string, nodes: DmNode[]): number {
+  const byId = nodeMap(nodes);
+  const n = byId.get(id);
+  return n ? depthOf(n, byId) : 0;
+}
+
 /** 节点的层级深度（根=0）。 */
 function depthOf(node: DmNode, byId: Map<string, DmNode>): number {
   let d = 0;

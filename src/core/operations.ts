@@ -172,6 +172,26 @@ export function groupNodes(
   return id;
 }
 
+/**
+ * 改父（拖进/拖出容器）：把节点挂到 newParentId 下（undefined=顶层）。
+ * newAbs 是节点拖拽后的绝对左上角（由 Canvas 从 xyflow internalNode 取）；position 换算成相对新父。
+ */
+export function reparentNode(
+  nodeId: string,
+  newParentId: string | undefined,
+  newAbs: { x: number; y: number },
+): void {
+  commit("reparent", (d) => {
+    const byId = nodeMap(d.nodes);
+    const node = byId.get(nodeId);
+    if (!node) return;
+    const npAbs = newParentId ? absolutePos(byId.get(newParentId)!, byId) : { x: 0, y: 0 };
+    node.position = { x: newAbs.x - npAbs.x, y: newAbs.y - npAbs.y };
+    if (newParentId) node.parentId = newParentId;
+    else delete node.parentId;
+  });
+}
+
 /** 解组：保留子节点（位置换回绝对/或提升到组的父），删掉容器。一条 command。 */
 export function ungroupNodes(groupId: string): void {
   commit("ungroup", (d) => {

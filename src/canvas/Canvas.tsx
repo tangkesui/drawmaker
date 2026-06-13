@@ -33,9 +33,10 @@ import {
   groupNodes,
   moveNodes,
   reconnectEdge,
+  reparentNode,
   ungroupNodes,
 } from "../core/operations";
-import { orderParentFirst, SUBGRAPH_KIND } from "../core/subgraph";
+import { absolutePos, nodeDepth, nodeMap, orderParentFirst, subtreeIds, SUBGRAPH_KIND } from "../core/subgraph";
 import type { DmEdge, DmNode, NodeData } from "../core/types";
 import { LabeledEdge, type LabeledEdgeData } from "./edges/LabeledEdge";
 import { getHelperLines, type HelperLines } from "./helper-lines";
@@ -220,14 +221,59 @@ function CanvasInner() {
     altDragRef.current = e.altKey;
   }, []);
 
+  // 拖进/拖出容器：按拖拽节点中心（绝对）命中最深的容器，与当前父不同则改父。
+  const tryReparent = useCallback(
+    (flowNode: FlowNode): boolean => {
+      const { doc } = useEditorStore.getState();
+      const dragged = doc.nodes.find((n) => n.id === flowNode.id);
+      if (!dragged) return false;
+      const internal = rf.getInternalNode(flowNode.id);
+      const abs = internal?.internals.positionAbsolute ?? { x: 0, y: 0 };
+      const w = internal?.measured?.width ?? 0;
+      const h = internal?.measured?.height ?? 0;
+      const cx = abs.x + w / 2;
+      const cy = abs.y + h / 2;
+
+      const excluded = subtreeIds(flowNode.id, doc.nodes); // 不能挂到自身子树
+      const byId = nodeMap(doc.nodes);
+      let best: string | undefined;
+      let bestDepth = -1;
+      for (const g of doc.nodes) {
+        if (g.kind !== SUBGRAPH_KIND || excluded.has(g.id)) continue;
+        const gAbs = absolutePos(g, byId);
+        const gw = g.size?.width ?? 0;
+        const gh = g.size?.height ?? 0;
+        if (cx >= gAbs.x && cx <= gAbs.x + gw && cy >= gAbs.y && cy <= gAbs.y + gh) {
+          const d = nodeDepth(g.id, doc.nodes);
+          if (d > bestDepth) {
+            best = g.id;
+            bestDepth = d;
+          }
+        }
+      }
+      if (best === dragged.parentId) return false; // 没换容器
+      reparentNode(flowNode.id, best, { x: abs.x, y: abs.y });
+      return true;
+    },
+    [rf],
+  );
+
   // 以下手势回调只在用户操作时触发，程序化改 nodes prop（undo/redo）不会触发它们 —— 故无重入。
-  const onNodeDragStop = useCallback((_e: React.MouseEvent, _n: FlowNode, dragged: FlowNode[]) => {
-    setHelperLines({});
-    const ends = dragged.map((n) => ({ id: n.id, position: n.position }));
-    if (altDragRef.current) altDragDuplicate(ends);
-    else moveNodes(ends);
-    altDragRef.current = false;
-  }, []);
+  const onNodeDragStop = useCallback(
+    (_e: React.MouseEvent, _n: FlowNode, dragged: FlowNode[]) => {
+      setHelperLines({});
+      const ends = dragged.map((n) => ({ id: n.id, position: n.position }));
+      if (altDragRef.current) {
+        altDragDuplicate(ends);
+      } else if (dragged.length === 1 && tryReparent(dragged[0])) {
+        // reparent 已 commit（含位置换算）
+      } else {
+        moveNodes(ends);
+      }
+      altDragRef.current = false;
+    },
+    [tryReparent],
+  );
 
   const onNodesDelete = useCallback((deleted: FlowNode[]) => {
     deleteNodes(deleted.map((n) => n.id));
