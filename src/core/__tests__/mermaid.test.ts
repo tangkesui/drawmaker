@@ -132,6 +132,43 @@ describe("toMermaid", () => {
     expect(toMermaid(docOf([], [edge]))).toContain('n_1 -->|"是/否"| n_2');
   });
 
+  test("subgraph：递归 emit 容器（含嵌套），边在顶层", () => {
+    const sg = (id: string, label: string, parentId?: string): DmNode => ({
+      id,
+      kind: "subgraph",
+      position: { x: 0, y: 0 },
+      data: { label },
+      ...(parentId ? { parentId } : {}),
+    });
+    const inGroup = (id: string, parentId: string): DmNode => ({
+      id,
+      kind: "rect",
+      position: { x: 0, y: 0 },
+      data: { label: id },
+      parentId,
+    });
+    const out = toMermaid(
+      docOf(
+        [sg("g1", "后端"), inGroup("A", "g1"), sg("g2", "内层", "g1"), inGroup("C", "g2"), node("D", "rect", "D")],
+        [{ id: "e_1", source: "A", target: "D" }],
+      ),
+    );
+    expect(out).toBe(
+      [
+        "flowchart TD",
+        '  subgraph g1["后端"]',
+        '    A["A"]',
+        '    subgraph g2["内层"]',
+        '      C["C"]',
+        "    end",
+        "  end",
+        '  D["D"]',
+        "  A --> D",
+        "",
+      ].join("\n"),
+    );
+  });
+
   test("完整小图按 节点行→边行 顺序", () => {
     const out = toMermaid(
       docOf(

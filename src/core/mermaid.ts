@@ -1,4 +1,5 @@
-import type { DataDiagram, DataDiagramType, DiagramType, DmDocument, EdgeArrow, EdgeStyle } from "./types";
+import type { DataDiagram, DataDiagramType, DiagramType, DmDocument, DmNode, EdgeArrow, EdgeStyle } from "./types";
+import { SUBGRAPH_KIND } from "./subgraph";
 
 /**
  * 文档 → mermaid 文本（纯函数，可测）。
@@ -65,17 +66,34 @@ const EDGE_OP: Record<EdgeStyle, Record<EdgeArrow, string>> = {
 function flowchartMermaid(doc: DmDocument): string {
   const dir = doc.meta.direction ?? "TD";
   const out = [`flowchart ${dir}`];
+
+  // 按 parentId 分组，递归 emit subgraph（含嵌套）；顶层 = parentId 为空。
+  const childrenOf = new Map<string | undefined, DmNode[]>();
   for (const n of doc.nodes) {
-    const [open, close] = SHAPE_WRAP[n.kind] ?? DEFAULT_WRAP;
-    out.push(`  ${n.id}${open}${dquote(n.data.label || n.id)}${close}`);
+    const arr = childrenOf.get(n.parentId);
+    if (arr) arr.push(n);
+    else childrenOf.set(n.parentId, [n]);
   }
+  const emit = (n: DmNode, indent: string): void => {
+    if (n.kind === SUBGRAPH_KIND) {
+      out.push(`${indent}subgraph ${n.id}[${dquote(n.data.label || n.id)}]`);
+      for (const c of childrenOf.get(n.id) ?? []) emit(c, indent + "  ");
+      out.push(`${indent}end`);
+    } else {
+      const [open, close] = SHAPE_WRAP[n.kind] ?? DEFAULT_WRAP;
+      out.push(`${indent}${n.id}${open}${dquote(n.data.label || n.id)}${close}`);
+    }
+  };
+  for (const n of childrenOf.get(undefined) ?? []) emit(n, "  ");
+
   for (const e of doc.edges) {
     const op = EDGE_OP[e.data?.style ?? "solid"][e.data?.arrow ?? "end"];
     const label = e.data?.label;
     out.push(`  ${e.source} ${label ? `${op}|${dquote(label)}|` : op} ${e.target}`);
   }
-  // 颜色/线宽 → mermaid style 指令（往返：import 侧从 vertex.styles 读回）
+  // 颜色/线宽 → mermaid style 指令（往返：import 侧从 vertex.styles 读回）；容器节点跳过。
   for (const n of doc.nodes) {
+    if (n.kind === SUBGRAPH_KIND) continue;
     const parts: string[] = [];
     if (n.data.fill) parts.push(`fill:${n.data.fill}`);
     if (n.data.stroke) parts.push(`stroke:${n.data.stroke}`);
