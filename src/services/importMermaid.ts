@@ -2,9 +2,11 @@ import { computeLayout } from "../canvas/auto-layout";
 import { viewport } from "../canvas/viewport-controls";
 import { commit } from "../core/history";
 import {
+  c4ToGraph,
   classToGraph,
   erToGraph,
   flowToGraph,
+  mindmapToGraph,
   sequenceToGraph,
   stateToGraph,
   type ImportGraph,
@@ -13,9 +15,11 @@ import { useEditorStore } from "../core/store";
 import type { DiagramType, DmDocument, DmNode } from "../core/types";
 import {
   detectDiagramType,
+  parseC4,
   parseClass,
   parseEr,
   parseFlow,
+  parseMindmap,
   parseSequence,
   parseState,
 } from "./mermaidParse";
@@ -32,6 +36,8 @@ async function buildGraph(detected: string, text: string): Promise<{ type: Diagr
   if (detected === "class") return { type: "class", graph: classToGraph(await parseClass(text)) };
   if (detected === "er") return { type: "er", graph: erToGraph(await parseEr(text)) };
   if (detected === "sequence") return { type: "sequence", graph: sequenceToGraph(await parseSequence(text)) };
+  if (detected === "c4") return { type: "c4", graph: c4ToGraph(await parseC4(text)) };
+  if (detected === "mindmap") return { type: "mindmap", graph: mindmapToGraph(await parseMindmap(text)) };
   return null;
 }
 

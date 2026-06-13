@@ -1,5 +1,13 @@
 import mermaid from "mermaid";
-import type { RawClass, RawEr, RawFlow, RawSequence, RawState } from "../core/mermaid-import";
+import type {
+  RawC4,
+  RawClass,
+  RawEr,
+  RawFlow,
+  RawMindmapNode,
+  RawSequence,
+  RawState,
+} from "../core/mermaid-import";
 
 /**
  * mermaid 官方解析器适配（依赖 DOM —— 运行在 Tauri webview；headless 测试需 jsdom 环境）。
@@ -84,4 +92,17 @@ export async function parseSequence(text: string): Promise<RawSequence> {
     getMessages: () => RawSequence["messages"];
   };
   return { actors: asRecord(db.getActors()), actorKeys: db.getActorKeys(), messages: db.getMessages() };
+}
+
+export async function parseC4(text: string): Promise<RawC4> {
+  const db = (await dbOf(text)) as {
+    getC4ShapeArray: () => RawC4["shapes"];
+    getRels: () => RawC4["rels"];
+  };
+  return { shapes: db.getC4ShapeArray(), rels: db.getRels() };
+}
+
+export async function parseMindmap(text: string): Promise<RawMindmapNode> {
+  const db = (await dbOf(text)) as { getMindmap: () => RawMindmapNode };
+  return db.getMindmap();
 }

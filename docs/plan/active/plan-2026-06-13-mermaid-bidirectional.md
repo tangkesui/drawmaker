@@ -28,8 +28,10 @@
 - [x] P4 形状收敛：调色板只列往返安全的 canonical 10 形状（rect/rounded/diamond/stadium/subroutine/cylinder/circle/hexagon/parallelogram/trapezoid）；ellipse + 架构形状（service/database/queue/loadbalancer/cloud/actor/note）退出调色板但保留在注册表（旧 .dm 仍渲染）。`HIDDEN_KINDS` + `isPaletteShape`
 - [~] P5 节点 id 用 mermaid 语义 id：✅ 导入已用 A/B/C；导出走 node.id 故往返稳定（新建节点仍 n_，待统一）
 - [~] P6 扩展到其余类型：✅ **state / class / er** 导入（node-edge 家族，复用 dagre+重建；services 抽取 getStates/getClasses/getEntities，core 纯映射 stateToGraph/classToGraph/erToGraph，3 单测）；importMermaidFromText 按 diagramType 分发（flowchart-v2/stateDiagram/class/er）；class/er 多行节点按行数估高（boxSize），computeLayout 改用 node.size。⏳ sequence（参与者+消息时序）、mindmap、c4、数据/时间家族（解析→DataEditor 表格）；⏳ headless 集成测试（jsdom 环境）覆盖 DOM 解析路径
-  - ✅ **sequence** 导入（参与者按 getActorKeys 顺序→节点、消息→边、direction=LR、跳过 note 等无两端事件）
-  - 已双向：flowchart / state / class / er / sequence（EDITABLE_TYPES）；待续 mindmap / c4 / 数据家族
+  - ✅ **sequence**（参与者→节点、消息→边、LR、跳过 note）
+  - ✅ **c4**（getC4ShapeArray：person→actor/system→rect，getRels→边）+ **mindmap**（getMindmap 树→节点 + 父子边）
+  - **graph 家族 7 种全部双向**：flowchart / state / class / er / sequence / c4 / mindmap（EDITABLE_TYPES）
+  - ⏳ 数据/时间家族（pie/gantt/timeline/journey/quadrant/xychart：解析→DataEditor 表格行，非画布）；jsdom 集成测试
 - [ ] P7 验证 + 打包
 
 ## 验收

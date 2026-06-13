@@ -42,7 +42,7 @@ const DIRECTIONS: { value: FlowDirection; label: string }[] = [
 ];
 
 /** 当前支持「文本 → 画布」回写的类型（解析器逐步扩展）。 */
-const EDITABLE_TYPES: DiagramType[] = ["flowchart", "state", "class", "er", "sequence"];
+const EDITABLE_TYPES: DiagramType[] = ["flowchart", "state", "class", "er", "sequence", "c4", "mindmap"];
 
 /**
  * 右侧 mermaid 面板：画布→文本实时预览；文本→画布可编辑 + 「应用」（双向）。

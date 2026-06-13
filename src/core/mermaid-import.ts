@@ -172,6 +172,55 @@ export function classToGraph(raw: RawClass): ImportGraph {
   return { nodes, edges, direction: "TD" };
 }
 
+/* ============ C4 ============ */
+
+export interface RawC4 {
+  shapes: { alias: string; label?: { text?: string }; typeC4Shape?: { text?: string } }[];
+  rels: { from: string; to: string; label?: { text?: string } }[];
+}
+
+export function c4ToGraph(raw: RawC4): ImportGraph {
+  const nodes = raw.shapes.map((s) => ({
+    id: s.alias,
+    kind: s.typeC4Shape?.text === "person" ? "actor" : "rect", // person→actor（往返），其余→rect
+    data: { label: s.label?.text || s.alias },
+  }));
+  const edges = raw.rels.map((r, i) => {
+    const edge: DmEdge = { id: `e_${i + 1}`, source: r.from, target: r.to };
+    if (r.label?.text) edge.data = { label: r.label.text };
+    return edge;
+  });
+  return { nodes, edges, direction: "TD" };
+}
+
+/* ============ mindmap（树 → 节点 + 父子边）============ */
+
+export interface RawMindmapNode {
+  nodeId: string;
+  descr?: string;
+  children?: RawMindmapNode[];
+}
+
+export function mindmapToGraph(root: RawMindmapNode): ImportGraph {
+  const nodes: Omit<DmNode, "position">[] = [];
+  const edges: DmEdge[] = [];
+  const seen = new Set<string>();
+  let ec = 0;
+  const walk = (node: RawMindmapNode): void => {
+    if (!seen.has(node.nodeId)) {
+      seen.add(node.nodeId);
+      nodes.push({ id: node.nodeId, kind: "rect", data: { label: node.descr || node.nodeId } });
+    }
+    for (const c of node.children ?? []) {
+      ec += 1;
+      edges.push({ id: `e_${ec}`, source: node.nodeId, target: c.nodeId });
+      walk(c);
+    }
+  };
+  walk(root);
+  return { nodes, edges, direction: "TD" };
+}
+
 /* ============ sequence diagram ============ */
 
 export interface RawSequence {

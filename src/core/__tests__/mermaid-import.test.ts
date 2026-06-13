@@ -3,6 +3,8 @@ import {
   classToGraph,
   erToGraph,
   flowToGraph,
+  c4ToGraph,
+  mindmapToGraph,
   sequenceToGraph,
   stateToGraph,
   type RawClass,
@@ -151,6 +153,40 @@ describe("sequenceToGraph（时序图导入映射）", () => {
     expect(g.edges).toEqual([
       { id: "e_1", source: "U", target: "S", data: { label: "请求" } },
       { id: "e_2", source: "S", target: "U", data: { label: "响应" } },
+    ]);
+  });
+});
+
+describe("c4ToGraph / mindmapToGraph", () => {
+  test("c4：person→actor、system→rect，Rel→边", () => {
+    const g = c4ToGraph({
+      shapes: [
+        { alias: "u", label: { text: "用户" }, typeC4Shape: { text: "person" } },
+        { alias: "s", label: { text: "服务" }, typeC4Shape: { text: "system" } },
+      ],
+      rels: [{ from: "u", to: "s", label: { text: "调用" } }],
+    });
+    expect(g.nodes).toEqual([
+      { id: "u", kind: "actor", data: { label: "用户" } },
+      { id: "s", kind: "rect", data: { label: "服务" } },
+    ]);
+    expect(g.edges[0]).toEqual({ id: "e_1", source: "u", target: "s", data: { label: "调用" } });
+  });
+
+  test("mindmap：树展平为节点 + 父子边", () => {
+    const g = mindmapToGraph({
+      nodeId: "root",
+      descr: "中心",
+      children: [
+        { nodeId: "A", descr: "A", children: [] },
+        { nodeId: "B", descr: "B", children: [{ nodeId: "C", descr: "C", children: [] }] },
+      ],
+    });
+    expect(g.nodes.map((n) => n.id)).toEqual(["root", "A", "B", "C"]);
+    expect(g.edges).toEqual([
+      { id: "e_1", source: "root", target: "A" },
+      { id: "e_2", source: "root", target: "B" },
+      { id: "e_3", source: "B", target: "C" },
     ]);
   });
 });
