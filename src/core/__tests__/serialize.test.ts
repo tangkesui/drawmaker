@@ -47,6 +47,19 @@ describe("serialize", () => {
     expect(deserializeDocument(text).meta).toEqual({ title: "Untitled" });
   });
 
+  test("round-trips parentId (subgraph 分组存盘)", () => {
+    const grouped: DmDocument = {
+      version: 1,
+      nodes: [
+        { id: "G1", kind: "subgraph", position: { x: 0, y: 0 }, data: { label: "组" } },
+        { id: "A", kind: "rect", position: { x: 10, y: 10 }, data: { label: "A" }, parentId: "G1" },
+      ],
+      edges: [],
+      meta: { title: "t" },
+    };
+    expect(deserializeDocument(serializeDocument(grouped))).toEqual(grouped);
+  });
+
   test("round-trips data-family content (data/时间家族存盘)", () => {
     const withData: DmDocument = {
       version: 1,

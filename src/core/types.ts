@@ -29,6 +29,11 @@ export interface DmNode {
   /** resize 后的尺寸；缺省回落注册表 defaultSize（旧 .dm 无此字段照常加载）。 */
   size?: { width: number; height: number };
   data: NodeData;
+  /**
+   * 所属分组（subgraph）节点 id。有 parentId 时 position 相对父节点左上角（与 xyflow 子节点一致）；
+   * 无则绝对。group 节点本身也可有 parentId ⇒ 嵌套。旧 .dm 无此字段照常加载。
+   */
+  parentId?: string;
 }
 
 /** 箭头方向：缺省（undefined）= "end"，即默认 A→B 终点箭头。 */
