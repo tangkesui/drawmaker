@@ -223,6 +223,15 @@ function CanvasInner() {
     [setEdgeEditing],
   );
 
+  // 双击空白画布建节点（Excalidraw/tldraw 手感）。只在 pane 上触发，不影响双击节点/边改字。
+  const onDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (!(e.target as HTMLElement).classList.contains("react-flow__pane")) return;
+      addNode("rect", screenToFlowPosition({ x: e.clientX, y: e.clientY }));
+    },
+    [screenToFlowPosition],
+  );
+
   return (
     <ReactFlow
       nodes={nodes}
@@ -231,6 +240,9 @@ function CanvasInner() {
       edgeTypes={edgeTypes}
       connectionMode={ConnectionMode.Loose}
       deleteKeyCode={["Backspace", "Delete"]}
+      // 双击改用于建节点，关掉默认的双击缩放
+      zoomOnDoubleClick={false}
+      onDoubleClick={onDoubleClick}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onNodeDragStop={onNodeDragStop}
