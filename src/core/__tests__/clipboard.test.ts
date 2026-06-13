@@ -3,6 +3,7 @@ import { parseClip, serializeClip, type Clip } from "../clipboard";
 import { undo } from "../history";
 import {
   addNode,
+  altDragDuplicate,
   connectNodes,
   deleteNodes,
   duplicateSelection,
@@ -74,6 +75,30 @@ describe("clipboard / duplicate / select", () => {
     expect(doc().nodes).toHaveLength(0);
     pasteClip(clip);
     expect(doc().nodes).toHaveLength(1);
+  });
+
+  test("altDragDuplicate：原节点移到终点、原位留副本、内部边复制", () => {
+    const a = addNode("rect", { x: 0, y: 0 });
+    const b = addNode("rect", { x: 100, y: 0 });
+    connectNodes(a, b);
+
+    altDragDuplicate([
+      { id: a, position: { x: 0, y: 200 } },
+      { id: b, position: { x: 100, y: 200 } },
+    ]);
+
+    expect(doc().nodes).toHaveLength(4);
+    expect(doc().nodes.find((n) => n.id === a)!.position).toEqual({ x: 0, y: 200 }); // 原节点到终点
+    const copies = doc().nodes.filter((n) => n.id !== a && n.id !== b);
+    expect(copies.map((c) => c.position)).toEqual([
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+    ]); // 副本留起点
+    expect(doc().edges).toHaveLength(2); // 原边 + 副本边
+
+    undo();
+    expect(doc().nodes).toHaveLength(2);
+    expect(doc().edges).toHaveLength(1);
   });
 
   test("duplicate copies current selection without using clipboard", () => {

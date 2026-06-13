@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   applyEdgeChanges,
   applyNodeChanges,
@@ -24,6 +24,7 @@ import "@xyflow/react/dist/style.css";
 import { useEditorStore } from "../core/store";
 import {
   addNode,
+  altDragDuplicate,
   connectNodes,
   deleteEdges,
   deleteNodes,
@@ -202,10 +203,19 @@ function CanvasInner() {
     setEdges((eds) => applyEdgeChanges(changes, eds));
   }, []);
 
+  // Alt 拖拽复制：记下拖拽起点是否按住 Alt。
+  const altDragRef = useRef(false);
+  const onNodeDragStart = useCallback((e: React.MouseEvent) => {
+    altDragRef.current = e.altKey;
+  }, []);
+
   // 以下手势回调只在用户操作时触发，程序化改 nodes prop（undo/redo）不会触发它们 —— 故无重入。
   const onNodeDragStop = useCallback((_e: React.MouseEvent, _n: FlowNode, dragged: FlowNode[]) => {
     setHelperLines({});
-    moveNodes(dragged.map((n) => ({ id: n.id, position: n.position })));
+    const ends = dragged.map((n) => ({ id: n.id, position: n.position }));
+    if (altDragRef.current) altDragDuplicate(ends);
+    else moveNodes(ends);
+    altDragRef.current = false;
   }, []);
 
   const onNodesDelete = useCallback((deleted: FlowNode[]) => {
@@ -276,6 +286,7 @@ function CanvasInner() {
         onDoubleClick={onDoubleClick}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
         onNodesDelete={onNodesDelete}
         onEdgesDelete={onEdgesDelete}

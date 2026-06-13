@@ -92,6 +92,42 @@ export function moveNodes(moves: { id: string; position: { x: number; y: number 
   });
 }
 
+/**
+ * Alt 拖拽复制（Excalidraw 同款）：原位留下副本，被拖节点移到终点。一条 command。
+ * ends 是被拖节点的终点位置；副本取被拖节点的当前（起点）位置 + 新 id；内部边一并复制。
+ */
+export function altDragDuplicate(ends: { id: string; position: { x: number; y: number } }[]): void {
+  if (ends.length === 0) return;
+  const ids = new Set(ends.map((m) => m.id));
+  const endMap = new Map(ends.map((m) => [m.id, m.position]));
+  // 克隆在 commit 外用真实节点做（draft 是 Proxy，structuredClone 会 DataCloneError）。
+  const { doc } = useEditorStore.getState();
+  const idMap = new Map<string, string>();
+  const copies = doc.nodes
+    .filter((n) => ids.has(n.id))
+    .map((n) => {
+      const id = nextId("n");
+      idMap.set(n.id, id);
+      return { ...structuredClone(n), id }; // position = 原节点当前（起点）位置
+    });
+  const copyEdges = doc.edges
+    .filter((e) => ids.has(e.source) && ids.has(e.target))
+    .map((e) => ({
+      ...structuredClone(e),
+      id: nextId("e"),
+      source: idMap.get(e.source)!,
+      target: idMap.get(e.target)!,
+    }));
+  commit("alt-drag duplicate", (d) => {
+    for (const n of d.nodes) {
+      const p = endMap.get(n.id);
+      if (p) n.position = p; // 原节点移到终点
+    }
+    d.nodes.push(...copies);
+    d.edges.push(...copyEdges);
+  });
+}
+
 export function deleteNodes(ids: string[]): void {
   if (ids.length === 0) return;
   const set = new Set(ids);
