@@ -1,0 +1,113 @@
+/**
+ * 暗色主题：覆盖式（不动现有亮色 CSS）。在 <html data-theme="dark"> 下生效。
+ * 只覆盖应用外壳/面板/画布底色；节点形状保持白底（在深色画布上可读，用户改色照常）。
+ */
+
+/* 画布底色 */
+[data-theme="dark"] .react-flow,
+[data-theme="dark"] .react-flow__pane {
+  background: #1e1e1e;
+}
+
+/* 工具栏 */
+[data-theme="dark"] .toolbar {
+  background: #252526;
+  border-bottom-color: #3c3c3c;
+}
+[data-theme="dark"] .toolbar button {
+  color: #d4d4d4;
+  background: #333335;
+  border-color: #45494a;
+}
+[data-theme="dark"] .toolbar button:hover {
+  background: #3a3a3c;
+}
+
+/* 状态栏 */
+[data-theme="dark"] .statusbar {
+  color: #9aa0a6;
+  background: #252526;
+  border-top-color: #3c3c3c;
+}
+
+/* 左侧形状调色板 */
+[data-theme="dark"] .shape-palette {
+  background: #252526;
+  border-right-color: #3c3c3c;
+}
+[data-theme="dark"] .palette-search {
+  color: #d4d4d4;
+  background: #3c3c3c;
+  border-color: #45494a;
+}
+[data-theme="dark"] .palette-cat {
+  color: #cccccc;
+}
+[data-theme="dark"] .palette-item:hover {
+  background: #2f3133;
+  border-color: #45494a;
+}
+[data-theme="dark"] .palette-name {
+  color: #b0b4b9;
+}
+
+/* 右侧属性面板 */
+[data-theme="dark"] .props-panel {
+  background: #252526;
+  border-left-color: #3c3c3c;
+}
+[data-theme="dark"] .props-title,
+[data-theme="dark"] .props-row {
+  color: #cccccc;
+}
+[data-theme="dark"] .props-row input[type="text"],
+[data-theme="dark"] .props-row input[type="number"],
+[data-theme="dark"] .props-row select {
+  color: #d4d4d4;
+  background: #3c3c3c;
+  border-color: #45494a;
+}
+
+/* 右键菜单 */
+[data-theme="dark"] .ctx-menu {
+  background: #2d2d2e;
+  border-color: #45494a;
+}
+[data-theme="dark"] .ctx-menu button {
+  color: #d4d4d4;
+}
+[data-theme="dark"] .ctx-menu button:hover {
+  background: #3a3a3c;
+}
+
+/* 数据/时间家族表格编辑器 */
+[data-theme="dark"] .data-editor {
+  background: #1e1e1e;
+}
+[data-theme="dark"] .de-title {
+  color: #e0e0e0;
+}
+[data-theme="dark"] .de-field,
+[data-theme="dark"] .de-table th {
+  color: #b0b4b9;
+}
+[data-theme="dark"] .de-input {
+  color: #d4d4d4;
+  background: #3c3c3c;
+  border-color: #45494a;
+}
+
+/* 切换按钮 */
+.theme-toggle {
+  padding: 1px 8px;
+  font-size: 11px;
+  color: inherit;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+.theme-toggle:hover {
+  opacity: 1;
+}

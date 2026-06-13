@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { loadRecentList } from "./core/document-actions";
 import { useEditorStore } from "./core/store";
 import { isDataDiagram, type DataDiagramType } from "./core/types";
@@ -15,6 +15,21 @@ import { ShapePalette } from "./ui/ShapePalette";
 import { TitleSync } from "./ui/TitleSync";
 import { Toolbar } from "./ui/Toolbar";
 import "./App.css";
+import "./theme.css";
+
+/** 暗/亮主题切换：data-theme 挂 <html>，localStorage 持久化。 */
+function ThemeToggle() {
+  const [dark, setDark] = useState(() => localStorage.getItem("drawmaker-theme") === "dark");
+  useEffect(() => {
+    document.documentElement.dataset.theme = dark ? "dark" : "light";
+    localStorage.setItem("drawmaker-theme", dark ? "dark" : "light");
+  }, [dark]);
+  return (
+    <button className="theme-toggle" onClick={() => setDark((v) => !v)}>
+      {dark ? "亮色" : "暗色"}
+    </button>
+  );
+}
 
 function StatusBar() {
   const currentPath = useEditorStore((s) => s.file.currentPath);
@@ -24,7 +39,10 @@ function StatusBar() {
   return (
     <footer className="statusbar">
       <span>{currentPath ?? "未命名"}</span>
-      {state && <span className="statusbar-state">{state}</span>}
+      <span className="statusbar-right">
+        {state && <span className="statusbar-state">{state}</span>}
+        <ThemeToggle />
+      </span>
     </footer>
   );
 }

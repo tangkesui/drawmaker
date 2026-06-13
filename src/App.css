@@ -45,3 +45,9 @@ body,
 .statusbar-state {
   color: #8a929c;
 }
+
+.statusbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
