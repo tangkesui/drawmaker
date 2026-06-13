@@ -99,20 +99,31 @@ export function moveNodes(moves: { id: string; position: { x: number; y: number 
  */
 export function altDragDuplicate(ends: { id: string; position: { x: number; y: number } }[]): void {
   if (ends.length === 0) return;
-  const ids = new Set(ends.map((m) => m.id));
   const endMap = new Map(ends.map((m) => [m.id, m.position]));
   // 克隆在 commit 外用真实节点做（draft 是 Proxy，structuredClone 会 DataCloneError）。
   const { doc } = useEditorStore.getState();
+  const byId = nodeMap(doc.nodes);
+  // 复制集 = 被拖节点的子树并集（拖容器要连带子节点）。
+  const copySet = new Set<string>();
+  for (const e of ends) for (const s of subtreeIds(e.id, doc.nodes)) copySet.add(s);
   const idMap = new Map<string, string>();
+  for (const id of copySet) idMap.set(id, nextId("n"));
+
   const copies = doc.nodes
-    .filter((n) => ids.has(n.id))
+    .filter((n) => copySet.has(n.id))
     .map((n) => {
-      const id = nextId("n");
-      idMap.set(n.id, id);
-      return { ...structuredClone(n), id }; // position = 原节点当前（起点）位置
+      const clone = structuredClone(n);
+      clone.id = idMap.get(n.id)!;
+      if (n.parentId && copySet.has(n.parentId)) {
+        clone.parentId = idMap.get(n.parentId)!; // 子副本：换新父、保持相对位置
+      } else {
+        delete clone.parentId; // 顶层副本：留在原绝对位置
+        clone.position = absolutePos(n, byId);
+      }
+      return clone;
     });
   const copyEdges = doc.edges
-    .filter((e) => ids.has(e.source) && ids.has(e.target))
+    .filter((e) => copySet.has(e.source) && copySet.has(e.target))
     .map((e) => ({
       ...structuredClone(e),
       id: nextId("e"),
@@ -122,7 +133,7 @@ export function altDragDuplicate(ends: { id: string; position: { x: number; y: n
   commit("alt-drag duplicate", (d) => {
     for (const n of d.nodes) {
       const p = endMap.get(n.id);
-      if (p) n.position = p; // 原节点移到终点
+      if (p) n.position = p; // 原节点（被拖的 ends）移到终点
     }
     d.nodes.push(...copies);
     d.edges.push(...copyEdges);

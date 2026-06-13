@@ -104,6 +104,17 @@ describe("clipboard / duplicate / select", () => {
     expect(doc().edges).toHaveLength(1);
   });
 
+  test("altDragDuplicate 容器：连带子树复制（容器+子节点）", () => {
+    const a = addNode("rect", { x: 100, y: 100 });
+    const gid = groupNodes([a], { x: 80, y: 60, width: 200, height: 160 }); // a 相对容器 (20,40)
+    altDragDuplicate([{ id: gid, position: { x: 180, y: 160 } }]);
+    expect(doc().nodes).toHaveLength(4); // 原 g+a + 副本 g'+a'
+    expect(doc().nodes.find((n) => n.id === gid)!.position).toEqual({ x: 180, y: 160 }); // 原容器到终点
+    const copyG = doc().nodes.find((n) => n.kind === "subgraph" && n.id !== gid)!;
+    expect(copyG.position).toEqual({ x: 80, y: 60 }); // 副本容器留原位
+    expect(doc().nodes.find((n) => n.parentId === copyG.id)!.position).toEqual({ x: 20, y: 40 }); // 子相对保持
+  });
+
   test("duplicate copies current selection without using clipboard", () => {
     const a = addNode("rect", { x: 0, y: 0 });
     select([a]);
