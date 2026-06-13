@@ -8,6 +8,12 @@ import type {
   RawSequence,
   RawState,
 } from "../core/mermaid-import";
+import type {
+  RawGantt,
+  RawJourney,
+  RawPie,
+  RawTimeline,
+} from "../core/mermaid-import-data";
 
 /**
  * mermaid 官方解析器适配（依赖 DOM —— 运行在 Tauri webview；headless 测试需 jsdom 环境）。
@@ -105,4 +111,39 @@ export async function parseC4(text: string): Promise<RawC4> {
 export async function parseMindmap(text: string): Promise<RawMindmapNode> {
   const db = (await dbOf(text)) as { getMindmap: () => RawMindmapNode };
   return db.getMindmap();
+}
+
+// ---- 数据/时间家族 ----
+
+export async function parsePie(text: string): Promise<RawPie> {
+  const db = (await dbOf(text)) as {
+    getSections: () => Map<string, number> | Record<string, number>;
+    getDiagramTitle: () => string;
+  };
+  return { title: db.getDiagramTitle(), sections: asRecord(db.getSections()) };
+}
+
+export async function parseGantt(text: string): Promise<RawGantt> {
+  const db = (await dbOf(text)) as {
+    getTasks: () => RawGantt["tasks"];
+    getDiagramTitle: () => string;
+    getDateFormat: () => string;
+  };
+  return { title: db.getDiagramTitle(), dateFormat: db.getDateFormat(), tasks: db.getTasks() };
+}
+
+export async function parseTimeline(text: string): Promise<RawTimeline> {
+  const db = (await dbOf(text)) as {
+    getTasks: () => RawTimeline["tasks"];
+    getCommonDb?: () => { getDiagramTitle?: () => string };
+  };
+  return { title: db.getCommonDb?.().getDiagramTitle?.() ?? "", tasks: db.getTasks() };
+}
+
+export async function parseJourney(text: string): Promise<RawJourney> {
+  const db = (await dbOf(text)) as {
+    getTasks: () => RawJourney["tasks"];
+    getDiagramTitle: () => string;
+  };
+  return { title: db.getDiagramTitle(), tasks: db.getTasks() };
 }

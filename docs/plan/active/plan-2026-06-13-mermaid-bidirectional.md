@@ -31,7 +31,9 @@
   - ✅ **sequence**（参与者→节点、消息→边、LR、跳过 note）
   - ✅ **c4**（getC4ShapeArray：person→actor/system→rect，getRels→边）+ **mindmap**（getMindmap 树→节点 + 父子边）
   - **graph 家族 7 种全部双向**：flowchart / state / class / er / sequence / c4 / mindmap（EDITABLE_TYPES）
-  - ⏳ 数据/时间家族（pie/gantt/timeline/journey/quadrant/xychart：解析→DataEditor 表格行，非画布）；jsdom 集成测试
+  - ✅ **数据/时间家族 4 种**：pie / gantt / timeline / journey 解析 → DataDiagram → DataEditor 表格（`core/mermaid-import-data` 纯映射 4 单测 + services parse* + importMermaid 数据分支 commit doc.data + EDITABLE_TYPES）
+  - ⏳ **quadrant / xychart 导入暂缓**：getQuadrantData 返回已处理渲染数据（难反推 config/points）、xychart-beta 解析报词法错（导出仍可用）
+  - **11/13 类型双向**（仅 quadrant/xychart 单向导出）；⏳ jsdom 集成测试覆盖 DOM 解析路径
 - [ ] P7 验证 + 打包
 
 ## 验收

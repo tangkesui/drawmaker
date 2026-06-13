@@ -11,17 +11,27 @@ import {
   stateToGraph,
   type ImportGraph,
 } from "../core/mermaid-import";
+import {
+  ganttToData,
+  journeyToData,
+  pieToData,
+  timelineToData,
+} from "../core/mermaid-import-data";
 import { useEditorStore } from "../core/store";
-import type { DiagramType, DmDocument, DmNode } from "../core/types";
+import type { DataDiagram, DataDiagramType, DiagramType, DmDocument, DmNode } from "../core/types";
 import {
   detectDiagramType,
   parseC4,
   parseClass,
   parseEr,
   parseFlow,
+  parseGantt,
+  parseJourney,
   parseMindmap,
+  parsePie,
   parseSequence,
   parseState,
+  parseTimeline,
 } from "./mermaidParse";
 
 export interface ImportResult {
@@ -41,6 +51,15 @@ async function buildGraph(detected: string, text: string): Promise<{ type: Diagr
   return null;
 }
 
+/** 数据/时间家族：解析 → DataDiagram（填 DataEditor 表格，非画布）。 */
+async function buildData(detected: string, text: string): Promise<{ type: DataDiagramType; data: DataDiagram } | null> {
+  if (detected === "pie") return { type: "pie", data: pieToData(await parsePie(text)) };
+  if (detected === "gantt") return { type: "gantt", data: ganttToData(await parseGantt(text)) };
+  if (detected === "timeline") return { type: "timeline", data: timelineToData(await parseTimeline(text)) };
+  if (detected === "journey") return { type: "journey", data: journeyToData(await parseJourney(text)) };
+  return null;
+}
+
 /**
  * 解析 mermaid 文本 → 替换当前文档为可拖拽的同构图（flowchart/state/class/er）。
  * dagre 自动布局；已存在的同名节点保留其位置（双向编辑时不跳位）。一条 history。
@@ -48,6 +67,17 @@ async function buildGraph(detected: string, text: string): Promise<{ type: Diagr
 export async function importMermaidFromText(text: string): Promise<ImportResult> {
   const detected = await detectDiagramType(text);
   if (!detected) return { ok: false, msg: "不是合法的 mermaid 文本" };
+
+  // 数据/时间家族：填 DataEditor，不动画布
+  const dataBuilt = await buildData(detected, text);
+  if (dataBuilt) {
+    commit("import mermaid", (d) => {
+      if (!d.data) d.data = {};
+      d.data[dataBuilt.type] = dataBuilt.data;
+      d.meta.diagramType = dataBuilt.type;
+    });
+    return { ok: true };
+  }
 
   const built = await buildGraph(detected, text);
   if (!built) return { ok: false, msg: `暂不支持回写画布（识别为 ${detected}）` };
