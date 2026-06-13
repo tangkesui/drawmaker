@@ -25,9 +25,10 @@
 - [x] P2 导入动作 `services/importMermaid.ts`：解析 → `flowToGraph` → dagre `computeLayout` 布局 → 重建 doc（同名 id 保位置）→ 一条 history + fitView
 - [~] P3 入口：✅ 菜单 File▸Import Mermaid（剪贴板）⌘⇧V；✅ **MermaidPanel 文本框可编辑 + 「应用到画布」按钮**（草稿/画布同步：未手改时实时镜像，手改后保留草稿、点应用解析回画布并保位置；目前 EDITABLE_TYPES=flowchart）；⏳ 画布 ⌘V 自动识别 mermaid
   - 双向闭环在一个面板内成立（flowchart）：画布改→文本实时更新；文本改→应用→画布更新（同名节点保位置）。Excalidraw mermaid 对话框同款。
-- [ ] P4 形状收敛：调色板只列 mermaid 标准形状；旧 kind 仍可加载（fallback 渲染）
+- [x] P4 形状收敛：调色板只列往返安全的 canonical 10 形状（rect/rounded/diamond/stadium/subroutine/cylinder/circle/hexagon/parallelogram/trapezoid）；ellipse + 架构形状（service/database/queue/loadbalancer/cloud/actor/note）退出调色板但保留在注册表（旧 .dm 仍渲染）。`HIDDEN_KINDS` + `isPaletteShape`
 - [~] P5 节点 id 用 mermaid 语义 id：✅ 导入已用 A/B/C；导出走 node.id 故往返稳定（新建节点仍 n_，待统一）
-- [ ] P6 扩展到其余 12 种类型（每种一个解析适配 + 数据类填表格）；headless 集成测试（jsdom 环境）覆盖 DOM 解析路径
+- [~] P6 扩展到其余类型：✅ **state / class / er** 导入（node-edge 家族，复用 dagre+重建；services 抽取 getStates/getClasses/getEntities，core 纯映射 stateToGraph/classToGraph/erToGraph，3 单测）；importMermaidFromText 按 diagramType 分发（flowchart-v2/stateDiagram/class/er）；class/er 多行节点按行数估高（boxSize），computeLayout 改用 node.size。⏳ sequence（参与者+消息时序）、mindmap、c4、数据/时间家族（解析→DataEditor 表格）；⏳ headless 集成测试（jsdom 环境）覆盖 DOM 解析路径
+  - 已双向：flowchart / state / class / er（EDITABLE_TYPES）
 - [ ] P7 验证 + 打包
 
 ## 验收

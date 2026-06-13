@@ -12,7 +12,7 @@
 
 不影响 mermaid 双向，直接提升「现有手感」：
 
-- **拖动对齐参考线 + 吸附**：对齐到其它节点边/中线，智能分布（Excalidraw & tldraw 的招牌）。最高价值。
+- ~~**拖动对齐参考线 + 吸附**~~ ✅ 已做（2026-06-13）：`canvas/helper-lines.ts` 纯计算（左/右/中 × 上/下/中 对齐，阈值吸附，4 单测）+ Canvas onNodesChange 吸附 + `HelperLinesOverlay` 蓝色参考线。
 - **双击空白画布快速建节点**：落点即进入文字编辑（比调色板拖更快）。
 - **右键上下文菜单**：复制 / 删除 / 置顶置底 / 锁定 / 复制为 PNG/SVG。
 - **Alt 拖拽复制、方向键微移、Shift 约束、框选多选**（xyflow `selectionOnDrag`）。
@@ -22,9 +22,10 @@
 
 mermaid 原生支持，故可双向：
 
-- **节点颜色/填充/描边** → mermaid `style id fill:#..,stroke:#..` 或 `classDef`（NodeData 已存 fill/stroke，差导出 + 解析回写）。
-- **边样式**虚线 `-.-` / 粗线 `==`；**箭头种类** `-->` / `--o` / `--x` / `<-->`。
-- **分组 / 容器** → mermaid `subgraph`（≈ Excalidraw frame）。
+- ~~**节点颜色/填充/描边** → mermaid `style id ...`~~ ✅ 已做（2026-06-13）：导出 `style id fill:..,stroke:..,stroke-width:..px`；导入读 `vertex.styles` 数组解析回 fill/stroke/strokeWidth。
+- ~~**边样式**虚线 `-.-` / 粗线 `==`~~ ✅ 已做：EdgeData.style（solid/dashed/thick）+ 属性面板「线型」下拉 + 渲染 dasharray/strokeWidth + 导出 `线型×方向` 9 操作符表（mermaid 实测全合法）+ 导入读 `edge.stroke`（normal/dotted/thick）。
+- **箭头种类** `--o` / `--x`（实心箭头已支持，圆/叉头待加）。
+- **分组 / 容器** → mermaid `subgraph`（≈ Excalidraw frame）。待做。
 - **z-order / 锁定**：mermaid 无对应，本地存 .dm、导出丢弃（次要）。
 
 ## Tier 3 — 破坏往返的自由白板特性（默认不做 / 本地不导出）
