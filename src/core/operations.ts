@@ -55,6 +55,7 @@ function applyEdgeData(d: DmDocument, ids: Set<string>, patch: Partial<EdgeData>
     const next: EdgeData = { ...e.data, ...patch };
     if (!next.label) delete next.label;
     if (!next.arrow || next.arrow === "end") delete next.arrow;
+    if (!next.style || next.style === "solid") delete next.style;
     if (Object.keys(next).length === 0) delete e.data;
     else e.data = next;
   }

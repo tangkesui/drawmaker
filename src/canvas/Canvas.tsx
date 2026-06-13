@@ -10,6 +10,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  useStore,
   type Connection,
   type Edge,
   type EdgeChange,
@@ -24,6 +25,7 @@ import { useEditorStore } from "../core/store";
 import { addNode, connectNodes, deleteEdges, deleteNodes, moveNodes, reconnectEdge } from "../core/operations";
 import type { DmEdge, DmNode, NodeData } from "../core/types";
 import { LabeledEdge, type LabeledEdgeData } from "./edges/LabeledEdge";
+import { getHelperLines, type HelperLines } from "./helper-lines";
 import { registerExportSource } from "./export";
 import { registerPlacement } from "./placement";
 import { allShapes, getShape } from "./shapes/registry";
@@ -62,6 +64,11 @@ function toFlowEdge(
 ): FlowEdge {
   // arrow 缺省 = "end"（默认 A→B 终点箭头）；"none" 才无箭头。
   const arrow = e.data?.arrow ?? "end";
+  // 线型只设 dasharray/strokeWidth（不设 stroke），让 edges.css 的选中蓝仍生效。
+  const style = e.data?.style ?? "solid";
+  const edgeStyle: React.CSSProperties = {};
+  if (style === "dashed") edgeStyle.strokeDasharray = "6 4";
+  if (style === "thick") edgeStyle.strokeWidth = 3;
   return {
     id: e.id,
     type: "labeled",
@@ -72,6 +79,7 @@ function toFlowEdge(
     sourceHandle: e.sourceHandle ?? undefined,
     targetHandle: e.targetHandle ?? undefined,
     selected,
+    style: edgeStyle,
     // 描边色/选中蓝走 edges.css（让 xyflow 自加的 .selected class 实时生效，不靠重建）；
     // 这里只挂 marker（marker 必须在 edge 对象上声明，xyflow 才会生成 def）。
     markerEnd: arrow === "end" || arrow === "both" ? ARROW_MARKER : undefined,
@@ -124,6 +132,9 @@ function CanvasInner() {
     setEditingEdgeId((cur) => (editing ? id : cur === id ? null : cur));
   }, []);
 
+  // 拖动对齐参考线（view 瞬态）。
+  const [helperLines, setHelperLines] = useState<HelperLines>({});
+
   // store → 本地。doc 变化时重建；selection 从 view.selected 取，避免重建丢选区。
   useEffect(() => {
     const sel = new Set(useEditorStore.getState().view.selected);
@@ -155,9 +166,22 @@ function CanvasInner() {
   }, [viewSelected]);
 
   // onNodesChange / onEdgesChange 只更新本地瞬态（拖拽、选区高亮），不入 history。
-  const onNodesChange = useCallback((changes: NodeChange<FlowNode>[]) => {
-    setNodes((nds) => applyNodeChanges(changes, nds));
-  }, []);
+  // 单节点拖动时算对齐参考线并吸附（改写该 change 的目标位置）。
+  const onNodesChange = useCallback(
+    (changes: NodeChange<FlowNode>[]) => {
+      const c = changes[0];
+      if (changes.length === 1 && c.type === "position" && c.dragging && c.position) {
+        const lines = getHelperLines(c, nodes);
+        if (lines.snapX !== undefined) c.position.x = lines.snapX;
+        if (lines.snapY !== undefined) c.position.y = lines.snapY;
+        setHelperLines({ horizontal: lines.horizontal, vertical: lines.vertical });
+      } else if (helperLines.horizontal !== undefined || helperLines.vertical !== undefined) {
+        setHelperLines({});
+      }
+      setNodes((nds) => applyNodeChanges(changes, nds));
+    },
+    [nodes, helperLines],
+  );
 
   const onEdgesChange = useCallback((changes: EdgeChange<FlowEdge>[]) => {
     setEdges((eds) => applyEdgeChanges(changes, eds));
@@ -165,6 +189,7 @@ function CanvasInner() {
 
   // 以下手势回调只在用户操作时触发，程序化改 nodes prop（undo/redo）不会触发它们 —— 故无重入。
   const onNodeDragStop = useCallback((_e: React.MouseEvent, _n: FlowNode, dragged: FlowNode[]) => {
+    setHelperLines({});
     moveNodes(dragged.map((n) => ({ id: n.id, position: n.position })));
   }, []);
 
@@ -221,7 +246,26 @@ function CanvasInner() {
       <Background />
       <Controls />
       <MiniMap pannable zoomable />
+      <HelperLinesOverlay lines={helperLines} />
     </ReactFlow>
+  );
+}
+
+/** 拖动对齐参考线叠层：按 viewport transform 把 flow 坐标的参考线画到屏幕。 */
+function HelperLinesOverlay({ lines }: { lines: HelperLines }) {
+  const transform = useStore((s) => s.transform);
+  if (lines.horizontal === undefined && lines.vertical === undefined) return null;
+  const [tx, ty, zoom] = transform;
+  const style: React.CSSProperties = { position: "absolute", background: "#2f6fed", pointerEvents: "none", zIndex: 10 };
+  return (
+    <>
+      {lines.vertical !== undefined && (
+        <div style={{ ...style, left: lines.vertical * zoom + tx, top: 0, width: 1, height: "100%" }} />
+      )}
+      {lines.horizontal !== undefined && (
+        <div style={{ ...style, top: lines.horizontal * zoom + ty, left: 0, height: 1, width: "100%" }} />
+      )}
+    </>
   );
 }
 

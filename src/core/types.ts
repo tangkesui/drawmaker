@@ -34,11 +34,15 @@ export interface DmNode {
 /** 箭头方向：缺省（undefined）= "end"，即默认 A→B 终点箭头。 */
 export type EdgeArrow = "none" | "end" | "start" | "both";
 
+/** 线型：缺省（undefined）= "solid"。dashed→mermaid 虚线 `-.-`，thick→粗线 `==`。 */
+export type EdgeStyle = "solid" | "dashed" | "thick";
+
 // 同 NodeData 用 type alias（xyflow Edge<T> 的 Record 约束）。字段全 optional：
 // 旧 .dm 无 data 字段照常加载。
 export type EdgeData = {
   label?: string;
   arrow?: EdgeArrow;
+  style?: EdgeStyle;
 };
 
 export interface DmEdge {

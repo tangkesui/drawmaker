@@ -240,19 +240,43 @@ const SHAPES: ShapeDef[] = [
 const BY_KIND = new Map(SHAPES.map((s) => [s.kind, s]));
 const FALLBACK = BY_KIND.get("rect")!;
 
+/**
+ * 退出调色板的形状（往返 mermaid 不闭合：架构形状只是「近似映射」，
+ * ellipse 与 stadium 都导出为 `([])`）。仍保留在注册表中以渲染旧 .dm（不破坏既有文件）。
+ * 调色板只留与 mermaid 标准形状 1:1 往返安全的 canonical 集。
+ */
+const HIDDEN_KINDS = new Set([
+  "ellipse",
+  "service",
+  "database",
+  "queue",
+  "loadbalancer",
+  "cloud",
+  "actor",
+  "note",
+]);
+
 /** 取形状定义；未知 kind 回退到 rect（序列化容错）。 */
 export function getShape(kind: string): ShapeDef {
   return BY_KIND.get(kind) ?? FALLBACK;
 }
 
+/** 注册表全集（含隐藏形状，供 nodeTypes 注册 / 渲染旧文件）。 */
 export function allShapes(): ShapeDef[] {
   return SHAPES;
 }
 
+/** 该 kind 是否出现在调色板（往返安全的标准形状）。 */
+export function isPaletteShape(kind: string): boolean {
+  return !HIDDEN_KINDS.has(kind);
+}
+
+/** 调色板分类：只含往返安全的标准形状（隐藏架构/ellipse）。 */
 export function shapesByCategory(): { category: string; shapes: ShapeDef[] }[] {
   const order: string[] = [];
   const map = new Map<string, ShapeDef[]>();
   for (const s of SHAPES) {
+    if (HIDDEN_KINDS.has(s.kind)) continue;
     if (!map.has(s.category)) {
       map.set(s.category, []);
       order.push(s.category);

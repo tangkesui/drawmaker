@@ -48,6 +48,22 @@ describe("toMermaid", () => {
     expect(out).toContain('n_5[("E")]');
   });
 
+  test("节点颜色/线宽 → style 指令（颜色往返导出侧）", () => {
+    const styled: DmNode = {
+      id: "n_1",
+      kind: "rect",
+      position: { x: 0, y: 0 },
+      data: { label: "A", fill: "#f9f", stroke: "#333", strokeWidth: 2 },
+    };
+    const out = toMermaid(docOf([styled], []));
+    expect(out).toContain('  n_1["A"]');
+    expect(out).toContain("  style n_1 fill:#f9f,stroke:#333,stroke-width:2px");
+  });
+
+  test("无颜色覆盖的节点不产生 style 行", () => {
+    expect(toMermaid(docOf([node("n_1", "rect", "A")], []))).not.toContain("style");
+  });
+
   test("Mermaid 标准形状 kind 映射到对应语法", () => {
     const out = toMermaid(
       docOf(
@@ -96,6 +112,19 @@ describe("toMermaid", () => {
   test("边缺省 arrow = end", () => {
     const edge: DmEdge = { id: "e_1", source: "n_1", target: "n_2" };
     expect(toMermaid(docOf([], [edge]))).toContain("n_1 --> n_2");
+  });
+
+  test("线型 × 方向 → 操作符（虚线/粗线往返导出侧）", () => {
+    const e = (style: "solid" | "dashed" | "thick", arrow: EdgeArrow): DmEdge => ({
+      id: "e_1",
+      source: "n_1",
+      target: "n_2",
+      data: { style, arrow },
+    });
+    expect(toMermaid(docOf([], [e("dashed", "end")]))).toContain("n_1 -.-> n_2");
+    expect(toMermaid(docOf([], [e("dashed", "none")]))).toContain("n_1 -.- n_2");
+    expect(toMermaid(docOf([], [e("thick", "end")]))).toContain("n_1 ==> n_2");
+    expect(toMermaid(docOf([], [e("thick", "both")]))).toContain("n_1 <==> n_2");
   });
 
   test("边标签：-->|\"text\"|，含转义", () => {

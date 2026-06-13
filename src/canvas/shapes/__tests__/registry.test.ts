@@ -21,8 +21,25 @@ describe("shape registry", () => {
     expect(getShape("ellipse").kind).toBe("ellipse");
   });
 
-  test("shapesByCategory covers every shape exactly once", () => {
-    const grouped = shapesByCategory().flatMap((g) => g.shapes);
-    expect(grouped.length).toBe(allShapes().length);
+  test("调色板只含往返安全的 canonical 形状，隐藏架构/ellipse（仍在注册表中可渲染）", () => {
+    const palette = shapesByCategory().flatMap((g) => g.shapes).map((s) => s.kind);
+    const canonical = [
+      "rect",
+      "rounded",
+      "diamond",
+      "stadium",
+      "subroutine",
+      "cylinder",
+      "circle",
+      "hexagon",
+      "parallelogram",
+      "trapezoid",
+    ];
+    for (const k of canonical) expect(palette).toContain(k);
+    for (const k of ["ellipse", "cloud", "service", "database", "actor", "note"]) {
+      expect(palette).not.toContain(k); // 退出调色板
+      expect(allShapes().map((s) => s.kind)).toContain(k); // 但注册表仍保留（旧文件可渲染）
+    }
+    expect(palette.length).toBeLessThan(allShapes().length);
   });
 });

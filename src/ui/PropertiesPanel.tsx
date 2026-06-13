@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { updateEdgeStyle, updateNodeStyle } from "../core/operations";
 import { useEditorStore } from "../core/store";
-import type { DmEdge, DmNode, EdgeArrow, NodeData } from "../core/types";
+import type { DmEdge, DmNode, EdgeArrow, EdgeStyle, NodeData } from "../core/types";
 import "./properties-panel.css";
 
 const ARROW_OPTIONS: { value: EdgeArrow; label: string }[] = [
@@ -9,6 +9,12 @@ const ARROW_OPTIONS: { value: EdgeArrow; label: string }[] = [
   { value: "start", label: "起点 ←" },
   { value: "both", label: "双向 ↔" },
   { value: "none", label: "无" },
+];
+
+const STYLE_OPTIONS: { value: EdgeStyle; label: string }[] = [
+  { value: "solid", label: "实线" },
+  { value: "dashed", label: "虚线" },
+  { value: "thick", label: "粗线" },
 ];
 
 export function PropertiesPanel() {
@@ -106,9 +112,11 @@ function NodePanel({ sel, selected }: { sel: DmNode[]; selected: string[] }) {
 }
 
 function EdgePanel({ selEdges, ids }: { selEdges: DmEdge[]; ids: string[] }) {
-  // arrow 缺省 = "end"；选区内不一致时下拉显示「多种」占位。
+  // 缺省 arrow="end" / style="solid"；选区内不一致时下拉显示「多种」占位。
   const arrows = selEdges.map((e) => e.data?.arrow ?? "end");
-  const common = arrows.every((a) => a === arrows[0]) ? arrows[0] : "";
+  const commonArrow = arrows.every((a) => a === arrows[0]) ? arrows[0] : "";
+  const styles = selEdges.map((e) => e.data?.style ?? "solid");
+  const commonStyle = styles.every((s) => s === styles[0]) ? styles[0] : "";
 
   return (
     <aside className="props-panel">
@@ -116,13 +124,29 @@ function EdgePanel({ selEdges, ids }: { selEdges: DmEdge[]; ids: string[] }) {
 
       <label className="props-row">
         <span>箭头</span>
-        <select value={common} onChange={(e) => updateEdgeStyle(ids, { arrow: e.target.value as EdgeArrow })}>
-          {common === "" && (
+        <select value={commonArrow} onChange={(e) => updateEdgeStyle(ids, { arrow: e.target.value as EdgeArrow })}>
+          {commonArrow === "" && (
             <option value="" disabled>
               多种
             </option>
           )}
           {ARROW_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="props-row">
+        <span>线型</span>
+        <select value={commonStyle} onChange={(e) => updateEdgeStyle(ids, { style: e.target.value as EdgeStyle })}>
+          {commonStyle === "" && (
+            <option value="" disabled>
+              多种
+            </option>
+          )}
+          {STYLE_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>

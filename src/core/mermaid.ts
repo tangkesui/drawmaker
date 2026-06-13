@@ -1,4 +1,4 @@
-import type { DataDiagram, DataDiagramType, DiagramType, DmDocument, EdgeArrow } from "./types";
+import type { DataDiagram, DataDiagramType, DiagramType, DmDocument, EdgeArrow, EdgeStyle } from "./types";
 
 /**
  * 文档 → mermaid 文本（纯函数，可测）。
@@ -55,12 +55,11 @@ const SHAPE_WRAP: Record<string, [string, string]> = {
 };
 const DEFAULT_WRAP: [string, string] = ["[", "]"];
 
-/** arrow 方向 → flowchart 连线操作符。start = 箭头在 source 端（逆向）。 */
-const ARROW_OP: Record<EdgeArrow, string> = {
-  end: "-->",
-  none: "---",
-  start: "<--",
-  both: "<-->",
+/** 连线操作符 = 线型 × 方向。start = 箭头在 source 端（逆向）。9 组合 mermaid 均合法。 */
+const EDGE_OP: Record<EdgeStyle, Record<EdgeArrow, string>> = {
+  solid: { end: "-->", none: "---", start: "<--", both: "<-->" },
+  dashed: { end: "-.->", none: "-.-", start: "<-.-", both: "<-.->" },
+  thick: { end: "==>", none: "===", start: "<==", both: "<==>" },
 };
 
 function flowchartMermaid(doc: DmDocument): string {
@@ -71,9 +70,17 @@ function flowchartMermaid(doc: DmDocument): string {
     out.push(`  ${n.id}${open}${dquote(n.data.label || n.id)}${close}`);
   }
   for (const e of doc.edges) {
-    const op = ARROW_OP[e.data?.arrow ?? "end"] ?? "-->";
+    const op = EDGE_OP[e.data?.style ?? "solid"][e.data?.arrow ?? "end"];
     const label = e.data?.label;
     out.push(`  ${e.source} ${label ? `${op}|${dquote(label)}|` : op} ${e.target}`);
+  }
+  // 颜色/线宽 → mermaid style 指令（往返：import 侧从 vertex.styles 读回）
+  for (const n of doc.nodes) {
+    const parts: string[] = [];
+    if (n.data.fill) parts.push(`fill:${n.data.fill}`);
+    if (n.data.stroke) parts.push(`stroke:${n.data.stroke}`);
+    if (n.data.strokeWidth != null) parts.push(`stroke-width:${n.data.strokeWidth}px`);
+    if (parts.length) out.push(`  style ${n.id} ${parts.join(",")}`);
   }
   return out.join("\n") + "\n";
 }

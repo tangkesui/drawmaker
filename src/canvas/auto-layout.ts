@@ -14,7 +14,7 @@ export function computeLayout(doc: DmDocument, dir: LayoutDir): Map<string, { x:
   g.setDefaultEdgeLabel(() => ({}));
 
   for (const n of doc.nodes) {
-    const { width, height } = getShape(n.kind).defaultSize;
+    const { width, height } = n.size ?? getShape(n.kind).defaultSize;
     g.setNode(n.id, { width, height });
   }
   for (const e of doc.edges) {
