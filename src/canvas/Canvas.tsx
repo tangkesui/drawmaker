@@ -367,6 +367,8 @@ function CanvasInner() {
         edgeTypes={edgeTypes}
         connectionMode={ConnectionMode.Loose}
         deleteKeyCode={["Backspace", "Delete"]}
+        // 方向键微移由 CanvasShortcuts 处理（入 history），关掉 xyflow 自带键盘移动避免双重
+        disableKeyboardA11y
         // 双击改用于建节点，关掉默认的双击缩放
         zoomOnDoubleClick={false}
         onDoubleClick={onDoubleClick}
