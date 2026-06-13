@@ -84,6 +84,7 @@
 ✅ **Phase 7**: 打包（自用 $0）— `pnpm tauri build` 出 ad-hoc 签名 dmg（~3.4MB），README 含首次放行说明；公证留待将来分发 — 计划已归档 `docs/plan/archive/plan-2026-05-29-phase7-package.md`
 🔄 **Phase 8+**: 持续迭代 — elkjs 进阶布局、主题/暗色、模板、形状 resize、边样式等（见 Backlog）
 🔄 **Phase 9**: 连线能力 — 标签 / 箭头方向 / 端点重连（已完成）
+🔄 **Phase 11**: **成熟主力工具**（2026-06-13 规划）— 从「功能完整」到「成熟、可日常主力、可持续分发」。序列：subgraph 分组 → mermaid 覆盖收尾 → 编辑体验打磨 → 模板系统 → 暗色主题 → elkjs 进阶布局 → 自动更新 → (WASM 性能,投机/条件)。详见 `docs/plan/staging/staging-phase11-roadmap.md`。排除：AI 辅助、CRDT（仍在 Backlog）。
 🔄 **Phase 10**: **Mermaid 转型**（2026-06-13 /goal 立项）— 把 drawmaker 做成可视化操作 mermaid 的工具：随时导出 mermaid、标准 mermaid 模块可拖拽、零代码画几乎所有 mermaid 图。Phase A（flowchart 导出）✅、Phase B（标准形状库）核心✅、Phase C（零代码增强）：实时预览 + 方向切换 + **13 种图表类型零代码可画可导出**（graph 家族 7：flowchart/sequence/state/class/er/c4/mindmap 用画布；数据/时间家族 6：pie/gantt/timeline/journey/quadrant/xychart 用表格编辑器）。计划 `docs/plan/active/plan-2026-06-13-mermaid-pivot.md`
 
 ## Roadmap
@@ -100,7 +101,8 @@
 | 7 | 打包：dmg + macOS 签名 + 公证（notarization） | ✅（自用 $0：dmg + ad-hoc；公证留待分发） |
 | 8+ | 持续迭代：elkjs 进阶布局、主题、模板、暗色模式、AI 辅助等 | 🔄 |
 | 9 | 连线能力：标签 / 箭头方向 / 端点重连 | ✅ |
-| 10 | Mermaid 转型：导出 mermaid + 标准模块 + 零代码画 mermaid 图 | 🔄 A✅ B核心✅ C：13 类型可用 |
+| 10 | Mermaid 转型：导出 mermaid + 标准模块 + 零代码画 mermaid 图 | 🔄 A✅ B核心✅ C：13 类型可用 + 双向 11/13 |
+| 11 | 成熟主力工具：subgraph / 收尾 / 体验 / 模板 / 暗色 / elkjs / 自动更新 / WASM | 🔄 规划完成，subgraph 待开工 |
 
 ## 关键指针
 
@@ -141,6 +143,7 @@
 - 2026-05-30：**Phase 8a 完成（补真窟窿）**。复制/剪切/粘贴/再制/全选画布节点（App 内部剪贴板 + 焦点感知键盘 `CanvasShortcuts`，文字仍走系统剪贴板；Edit 菜单换成真 op）；形状 resize（`NodeResizer` + `DmNode.size` 缺省回落注册表）。新增 `clipboard.ts` / `operations` 的 copy/cut/paste/duplicate/selectAll/resizeNode。逻辑 27 单测全绿；纯交互三项（resize 拖拽 / 运行态 ⌘C⌘V / 文本焦点 guard）因本机环境（无 cliclick/Quartz、中文 IME、NSOpenPanel AX 过深）未自动化验到，留手动。
 - 2026-05-30：**Phase 8a 修复 + 实测**。发现 resize 手柄不显示（节点尺寸该用 `style.{width,height}` 而非顶层 `width/height`，v12 NodeResizer 才渲染手柄）、⌘C/⌘V 不触发（键盘监听改捕获阶段 + `e.code`，避免 ReactFlow 冒泡吞键 + IME）。两者修复后 computer-use 实测通过（resize 手柄出现、⌘C⌘V 节点数 1→2）。**教训**：此前验证一直撞到 `/Applications` 常驻的 Phase 7 安装版（单实例重定向 dev 启动），杀掉后 Phase 8 正常；dogfood 需用最新 build 重装。
 - 2026-06-04：**代码体检 + v0.2.0 打包**。全量体检结论:架构健康(分层合规、无 any、无死代码),真问题集中在 history。修复:①撤销栈加 MAX_HISTORY=200 上限(超限丢最旧,cursor/savedCursor 平移,保存点被裁则置不可达哨兵恒 dirty);②**真 bug**——保存→撤销→新改动时 redo 分支截断不使旧 savedCursor 失效,新 cursor 数值碰巧相等会误判"干净"、关窗不提示丢失,已修并 4 个新单测锁住(31/31 绿);③`get_recent` 过滤已删除文件并回写;④PropertiesPanel/ShapePalette 渲染 memo 化。版本 0.1.0→0.2.0,`drawmaker_0.2.0_aarch64.dmg` 已构建并重装 /Applications,安装版冒烟通过。仓库已加 forgejo 远端双备份(2026-06-04 推送)。计划归档。
+- 2026-06-13：**Phase 11 路线规划**。把现有方向（除 AI 辅助、CRDT）整理为大目标「成熟主力工具」+ 8 个有序可落地 plan（subgraph→mermaid 收尾→编辑体验→模板→暗色→elkjs→自动更新→WASM）。详见 `docs/plan/staging/staging-phase11-roadmap.md`。subgraph 的 V0/V1 去风险探针已过（mermaid `getSubGraphs()` 嵌套靠成员含子组 id；xyflow 子节点坐标相对父、`extent:'parent'` 夹住、父排子前），模型成立可开工。
 - 2026-06-13：**发布 v0.3.0**。Excalidraw 手感补全(双击建点 / 右键菜单 / Alt 拖拽复制;框选=Shift+拖拽走 xyflow 默认,不动现有平移手感)。版本 0.2.0→0.3.0,90 测试绿,`drawmaker_0.3.0_aarch64.dmg` 构建+重装。tag v0.3.0 推 GitHub/forgejo,两端 Release 均挂 dmg(GitHub releases/tag/v0.3.0、forgejo release id 10)。**v0.3.0 = mermaid 双向编辑(11/13 类型)+ 13 类型导出 + Excalidraw 手感的完整里程碑。** 沉淀方法论文档 docs/methodology.md。
 - 2026-06-13：**双向导入扩展数据家族 4 种（11/13 双向）**。pie/gantt/timeline/journey 解析→DataDiagram→DataEditor 表格:`core/mermaid-import-data` 纯映射(pieToData/ganttToData/timelineToData/journeyToData,4 单测)+ services parsePie/Gantt/Timeline/Journey(注意 gantt 从 task.raw.startTime.startData/endTime.data 取、timeline title 在 commonDb)+ importMermaid 数据分支(commit doc.data[type]+diagramType,不动画布)+ EDITABLE_TYPES。**quadrant/xychart 导入暂缓**(getQuadrantData 已处理渲染数据难反推、xychart-beta 解析报词法错;导出仍可用)。**至此 13 种里 11 种文本↔画布双向**(仅 quadrant/xychart 单向导出)。86/86 测试绿,已重装。待续:jsdom 集成测试。
 - 2026-06-13：**双向导入扩展 c4 + mindmap（graph 家族 7 种全双向）**。c4:`getC4ShapeArray`(person→actor/system→rect)+`getRels`→边;mindmap:`getMindmap` 树展平为节点 + 父子边。parseC4/parseMindmap + c4ToGraph/mindmapToGraph(2 单测)+ 分发 + EDITABLE_TYPES。**至此 graph 家族 7 种(flowchart/state/class/er/sequence/c4/mindmap)全部文本↔画布双向**。82/82 测试绿,已重装。待续:数据/时间家族 6 种(解析→DataEditor 表格)+ jsdom 集成测试。
