@@ -18,12 +18,15 @@
 - 状态：计划已写 `plan-2026-06-13-subgraph.md`，V0/V1 探针已过（getSubGraphs 嵌套靠成员含子组 id；xyflow 子坐标相对父、extent:'parent' 约束）。
 - 颗粒度：大（一个 plan，8 阶段）。
 
-### S2 · mermaid 覆盖收尾
-- 范围：quadrant/xychart 导入（getQuadrantData 已处理数据难反推、xychart-beta 解析不稳，需再探或换思路）+ 导入导出细节打磨。
-- 颗粒度：小。目标：13/13 双向。
-- 依赖：无（独立）。
+### S2 · mermaid 覆盖收尾 — 🛑 技术墙，关闭
+- 2026-06-13 二次探针：**quadrant/xychart 导入不可行**。
+  - quadrant：`getQuadrantData()` 返回已渲染像素数据（点 170.2/214.6、颜色/半径/文字定位），原始输入（x:0.3、轴标签）反推不回来。
+  - xychart：语法正确时 `parse` 在 jsdom 下仍 INVALID（langium 解析器不工作）。
+- 结论：保持单向导出，**11/13 双向是 mermaid API 给定的上限**。S2 关闭不再投入。
 
-### S3 · 编辑体验打磨
+### S3 · 编辑体验打磨 — 🔄 进行中
+- ✅ 方向键微移（1px / Shift 10px，入 history）。
+- ⏳ 双击建点后自动进编辑态、右键菜单补全。
 - 范围：方向键微移节点、双击建点后自动进编辑态、键盘/右键菜单补全（如置顶置底——本地态、mermaid 无对应）。
 - 颗粒度：小-中。纯增量、低风险。
 
