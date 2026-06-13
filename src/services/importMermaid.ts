@@ -5,12 +5,20 @@ import {
   classToGraph,
   erToGraph,
   flowToGraph,
+  sequenceToGraph,
   stateToGraph,
   type ImportGraph,
 } from "../core/mermaid-import";
 import { useEditorStore } from "../core/store";
 import type { DiagramType, DmDocument, DmNode } from "../core/types";
-import { detectDiagramType, parseClass, parseEr, parseFlow, parseState } from "./mermaidParse";
+import {
+  detectDiagramType,
+  parseClass,
+  parseEr,
+  parseFlow,
+  parseSequence,
+  parseState,
+} from "./mermaidParse";
 
 export interface ImportResult {
   ok: boolean;
@@ -23,6 +31,7 @@ async function buildGraph(detected: string, text: string): Promise<{ type: Diagr
   if (detected === "stateDiagram") return { type: "state", graph: stateToGraph(await parseState(text)) };
   if (detected === "class") return { type: "class", graph: classToGraph(await parseClass(text)) };
   if (detected === "er") return { type: "er", graph: erToGraph(await parseEr(text)) };
+  if (detected === "sequence") return { type: "sequence", graph: sequenceToGraph(await parseSequence(text)) };
   return null;
 }
 

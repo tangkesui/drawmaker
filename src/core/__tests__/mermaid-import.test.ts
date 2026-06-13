@@ -3,10 +3,12 @@ import {
   classToGraph,
   erToGraph,
   flowToGraph,
+  sequenceToGraph,
   stateToGraph,
   type RawClass,
   type RawEr,
   type RawFlow,
+  type RawSequence,
   type RawState,
 } from "../mermaid-import";
 
@@ -126,5 +128,29 @@ describe("stateToGraph / classToGraph / erToGraph（其余 graph 类型导入映
     expect(g.nodes[0].data.label).toBe("客户\nstring 姓名");
     expect(g.nodes[1].id).toBe("订单");
     expect(g.edges[0]).toEqual({ id: "e_1", source: "客户", target: "订单", data: { label: "下单" } });
+  });
+});
+
+describe("sequenceToGraph（时序图导入映射）", () => {
+  test("参与者按 actorKeys 顺序→节点；消息→边；跳过无两端事件", () => {
+    const raw: RawSequence = {
+      actors: { U: { description: "用户" }, S: { description: "服务" } },
+      actorKeys: ["U", "S"],
+      messages: [
+        { from: "U", to: "S", message: "请求" },
+        { from: "S", to: "U", message: "响应" },
+        { message: "note" }, // 无 from/to → 跳过
+      ],
+    };
+    const g = sequenceToGraph(raw);
+    expect(g.direction).toBe("LR");
+    expect(g.nodes).toEqual([
+      { id: "U", kind: "rect", data: { label: "用户" } },
+      { id: "S", kind: "rect", data: { label: "服务" } },
+    ]);
+    expect(g.edges).toEqual([
+      { id: "e_1", source: "U", target: "S", data: { label: "请求" } },
+      { id: "e_2", source: "S", target: "U", data: { label: "响应" } },
+    ]);
   });
 });

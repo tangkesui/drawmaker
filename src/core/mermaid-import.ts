@@ -172,6 +172,31 @@ export function classToGraph(raw: RawClass): ImportGraph {
   return { nodes, edges, direction: "TD" };
 }
 
+/* ============ sequence diagram ============ */
+
+export interface RawSequence {
+  actors: Record<string, { description?: string }>;
+  actorKeys: string[];
+  messages: { from?: string; to?: string; message?: string }[];
+}
+
+export function sequenceToGraph(raw: RawSequence): ImportGraph {
+  // 参与者按 actorKeys 顺序（决定横向排列），消息按数组顺序（时序）
+  const nodes = raw.actorKeys.map((key) => ({
+    id: key,
+    kind: "rect",
+    data: { label: raw.actors[key]?.description || key },
+  }));
+  const edges = raw.messages
+    .filter((m) => m.from && m.to) // 跳过 note 等无两端的事件
+    .map((m, i) => {
+      const edge: DmEdge = { id: `e_${i + 1}`, source: m.from!, target: m.to! };
+      if (m.message) edge.data = { label: m.message };
+      return edge;
+    });
+  return { nodes, edges, direction: "LR" }; // 时序图横向更贴近
+}
+
 /* ============ ER diagram ============ */
 
 export interface RawEr {

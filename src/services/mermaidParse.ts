@@ -1,5 +1,5 @@
 import mermaid from "mermaid";
-import type { RawClass, RawEr, RawFlow, RawState } from "../core/mermaid-import";
+import type { RawClass, RawEr, RawFlow, RawSequence, RawState } from "../core/mermaid-import";
 
 /**
  * mermaid 官方解析器适配（依赖 DOM —— 运行在 Tauri webview；headless 测试需 jsdom 环境）。
@@ -75,4 +75,13 @@ export async function parseEr(text: string): Promise<RawEr> {
     getRelationships: () => RawEr["relationships"];
   };
   return { entities: asRecord(db.getEntities()), relationships: db.getRelationships() };
+}
+
+export async function parseSequence(text: string): Promise<RawSequence> {
+  const db = (await dbOf(text)) as {
+    getActors: () => Map<string, RawSequence["actors"][string]> | RawSequence["actors"];
+    getActorKeys: () => string[];
+    getMessages: () => RawSequence["messages"];
+  };
+  return { actors: asRecord(db.getActors()), actorKeys: db.getActorKeys(), messages: db.getMessages() };
 }
