@@ -41,6 +41,7 @@ import type { DmEdge, DmNode, NodeData } from "../core/types";
 import { LabeledEdge, type LabeledEdgeData } from "./edges/LabeledEdge";
 import { getHelperLines, type HelperLines } from "./helper-lines";
 import { registerGroupControls } from "./group-controls";
+import { setAutoEdit } from "./auto-edit";
 import "./context-menu.css";
 
 type ContextMenuState = { x: number; y: number; kind: "node" } | { x: number; y: number; kind: "edge"; edgeId: string };
@@ -306,10 +307,12 @@ function CanvasInner() {
   );
 
   // 双击空白画布建节点（Excalidraw/tldraw 手感）。只在 pane 上触发，不影响双击节点/边改字。
+  // 建完标记自动进编辑态（ShapeNode 挂载时认领）。
   const onDoubleClick = useCallback(
     (e: React.MouseEvent) => {
       if (!(e.target as HTMLElement).classList.contains("react-flow__pane")) return;
-      addNode("rect", screenToFlowPosition({ x: e.clientX, y: e.clientY }));
+      const id = addNode("rect", screenToFlowPosition({ x: e.clientX, y: e.clientY }));
+      setAutoEdit(id);
     },
     [screenToFlowPosition],
   );

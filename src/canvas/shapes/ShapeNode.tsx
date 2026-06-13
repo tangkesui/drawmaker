@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Handle, NodeResizer, Position, type Node, type NodeProps } from "@xyflow/react";
 import { renameNode, resizeNode } from "../../core/operations";
 import type { NodeData } from "../../core/types";
+import { consumeAutoEdit } from "../auto-edit";
 import { getShape } from "./registry";
 import "./shapes.css";
 
@@ -13,7 +14,7 @@ export function ShapeNode({ id, type, data, selected, width, height }: NodeProps
   const w = typeof width === "number" ? width : def.defaultSize.width;
   const h = typeof height === "number" ? height : def.defaultSize.height;
 
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(() => consumeAutoEdit(id)); // 双击建点 → 挂载即进编辑
   const [text, setText] = useState(data.label);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
