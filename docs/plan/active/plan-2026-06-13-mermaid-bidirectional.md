@@ -33,7 +33,8 @@
   - **graph 家族 7 种全部双向**：flowchart / state / class / er / sequence / c4 / mindmap（EDITABLE_TYPES）
   - ✅ **数据/时间家族 4 种**：pie / gantt / timeline / journey 解析 → DataDiagram → DataEditor 表格（`core/mermaid-import-data` 纯映射 4 单测 + services parse* + importMermaid 数据分支 commit doc.data + EDITABLE_TYPES）
   - ⏳ **quadrant / xychart 导入暂缓**：getQuadrantData 返回已处理渲染数据（难反推 config/points）、xychart-beta 解析报词法错（导出仍可用）
-  - **11/13 类型双向**（仅 quadrant/xychart 单向导出）；⏳ jsdom 集成测试覆盖 DOM 解析路径
+  - **11/13 类型双向**（仅 quadrant/xychart 单向导出）
+  - [x] **jsdom 集成测试**：`mermaid-roundtrip.test.ts`（`// @vitest-environment jsdom`）真跑 mermaid 解析器，覆盖 services/mermaidParse 这条路 + flowchart 颜色/边样式端到端往返 + state 解析（mermaid 在 vitest jsdom 可跑）
 - [ ] P7 验证 + 打包
 
 ## 验收
