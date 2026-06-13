@@ -334,7 +334,9 @@ export function selectAll(): void {
  */
 export function getSelectionClip(): Clip | null {
   const { doc, view } = useEditorStore.getState();
-  const sel = new Set(view.selected);
+  // 选中容器 → 连带其子树（复制分组带内容）。
+  const sel = new Set<string>();
+  for (const id of view.selected) for (const s of subtreeIds(id, doc.nodes)) sel.add(s);
   const nodes = doc.nodes.filter((n) => sel.has(n.id));
   if (nodes.length === 0) return null;
   const edges = doc.edges.filter((e) => sel.has(e.source) && sel.has(e.target));
@@ -343,26 +345,32 @@ export function getSelectionClip(): Clip | null {
 
 const PASTE_OFFSET = 24;
 
-/** 把一组节点/边以新 id、偏移后放入文档，整批一条 command，并选中新副本。 */
+/** 把一组节点/边以新 id 放入文档，整批一条 command，并选中新副本。
+ *  分组：父也在复制集 → 重映射为新父 + 保持相对位置；否则提升到顶层 + 偏移。 */
 function placeCopies(srcNodes: DmNode[], srcEdges: DmEdge[], label: string): void {
   if (srcNodes.length === 0) return;
   const idMap = new Map<string, string>();
+  for (const n of srcNodes) idMap.set(n.id, nextId("n"));
+  const copied = new Set(srcNodes.map((n) => n.id));
+
   const newNodes = srcNodes.map((n) => {
-    const id = nextId("n");
-    idMap.set(n.id, id);
     const clone = structuredClone(n);
-    return {
-      ...clone,
-      id,
-      position: { x: n.position.x + PASTE_OFFSET, y: n.position.y + PASTE_OFFSET },
-    };
+    clone.id = idMap.get(n.id)!;
+    if (n.parentId && copied.has(n.parentId)) {
+      clone.parentId = idMap.get(n.parentId)!; // 子节点：换新父、保持相对位置
+    } else {
+      delete clone.parentId; // 顶层副本：偏移
+      clone.position = { x: clone.position.x + PASTE_OFFSET, y: clone.position.y + PASTE_OFFSET };
+    }
+    return clone;
   });
   const newEdges = srcEdges.map((e) => {
     const clone = structuredClone(e);
     return { ...clone, id: nextId("e"), source: idMap.get(e.source)!, target: idMap.get(e.target)! };
   });
 
-  setSelected(newNodes.map((n) => n.id));
+  // 只选顶层副本（避免选区横跨层级）
+  setSelected(newNodes.filter((n) => !n.parentId).map((n) => n.id));
   commit(label, (d) => {
     d.nodes.push(...newNodes);
     d.edges.push(...newEdges);

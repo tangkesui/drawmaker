@@ -23,3 +23,15 @@
   border-color: #2f6fed;
   border-style: solid;
 }
+
+/* 右下角 resize 手柄 */
+.subgraph-resize {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  background: #2f6fed;
+  border: 1px solid #ffffff;
+  border-radius: 2px;
+}

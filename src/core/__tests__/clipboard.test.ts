@@ -156,6 +156,21 @@ describe("clipboard / duplicate / select", () => {
     expect(aNode.position).toEqual({ x: 10, y: 10 }); // 绝对 100,100 - g2 绝对 90,90
   });
 
+  test("复制分组：选容器带子树，parentId 重映射、子相对位置保持、顶层容器偏移", () => {
+    const a = addNode("rect", { x: 100, y: 100 });
+    const gid = groupNodes([a], { x: 80, y: 60, width: 200, height: 160 }); // a 相对容器 (20,40)
+    select([gid]);
+    const clip = getSelectionClip()!;
+    expect(clip.nodes.map((n) => n.id).sort()).toEqual([a, gid].sort()); // 带上子节点
+
+    pasteClip(clip);
+    expect(doc().nodes).toHaveLength(4); // 原 g+a + 新 g'+a'
+    const newGroup = doc().nodes.find((n) => n.kind === "subgraph" && n.id !== gid)!;
+    const newChild = doc().nodes.find((n) => n.parentId === newGroup.id)!;
+    expect(newGroup.position).toEqual({ x: 104, y: 84 }); // 80+24,60+24（顶层偏移）
+    expect(newChild.position).toEqual({ x: 20, y: 40 }); // 相对保持
+  });
+
   test("删容器连带删子树（避免孤儿 parentId）", () => {
     const a = addNode("rect", { x: 0, y: 0 });
     const b = addNode("rect", { x: 50, y: 0 });
