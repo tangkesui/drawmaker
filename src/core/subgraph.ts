@@ -64,6 +64,71 @@ export function childIds(parentId: string, nodes: DmNode[]): string[] {
   return nodes.filter((n) => n.parentId === parentId).map((n) => n.id);
 }
 
+/** 节点的层级深度（根=0）。 */
+function depthOf(node: DmNode, byId: Map<string, DmNode>): number {
+  let d = 0;
+  const seen = new Set<string>([node.id]);
+  let p = node.parentId ? byId.get(node.parentId) : undefined;
+  while (p && !seen.has(p.id)) {
+    seen.add(p.id);
+    d += 1;
+    p = p.parentId ? byId.get(p.parentId) : undefined;
+  }
+  return d;
+}
+
+/**
+ * 导入分组图的布局（纯函数）：叶子已有绝对坐标，自底向上给每个容器算包围框（含标题栏+padding），
+ * 再把所有节点换成「相对父」坐标。返回每个 id 的最终 position（+ 容器 size）。
+ */
+export function layoutWithGroups(
+  nodes: DmNode[],
+  leafAbs: Map<string, { x: number; y: number }>,
+  leafSize: (id: string) => { width: number; height: number },
+  pad = 24,
+  titleH = 26,
+): Map<string, { position: { x: number; y: number }; size?: { width: number; height: number } }> {
+  const byId = nodeMap(nodes);
+  const isGroup = (id: string): boolean => byId.get(id)?.kind === SUBGRAPH_KIND;
+
+  const abs = new Map<string, { x: number; y: number }>();
+  const size = new Map<string, { width: number; height: number }>();
+  for (const n of nodes) {
+    if (isGroup(n.id)) continue;
+    abs.set(n.id, leafAbs.get(n.id) ?? { x: 0, y: 0 });
+    size.set(n.id, leafSize(n.id));
+  }
+  // 容器自底向上（深度大的先算，保证嵌套子容器已就绪）
+  const groups = nodes.filter((n) => isGroup(n.id)).sort((a, b) => depthOf(b, byId) - depthOf(a, byId));
+  for (const g of groups) {
+    const kids = nodes.filter((n) => n.parentId === g.id);
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const c of kids) {
+      const p = abs.get(c.id);
+      const s = size.get(c.id);
+      if (!p || !s) continue;
+      minX = Math.min(minX, p.x);
+      minY = Math.min(minY, p.y);
+      maxX = Math.max(maxX, p.x + s.width);
+      maxY = Math.max(maxY, p.y + s.height);
+    }
+    if (!Number.isFinite(minX)) {
+      minX = 0; minY = 0; maxX = 120; maxY = 60; // 空容器兜底
+    }
+    abs.set(g.id, { x: minX - pad, y: minY - pad - titleH });
+    size.set(g.id, { width: maxX - minX + pad * 2, height: maxY - minY + pad * 2 + titleH });
+  }
+  // 换成相对父
+  const out = new Map<string, { position: { x: number; y: number }; size?: { width: number; height: number } }>();
+  for (const n of nodes) {
+    const a = abs.get(n.id) ?? { x: 0, y: 0 };
+    const pAbs = n.parentId ? abs.get(n.parentId) : undefined;
+    const position = pAbs ? { x: a.x - pAbs.x, y: a.y - pAbs.y } : a;
+    out.set(n.id, { position, ...(isGroup(n.id) ? { size: size.get(n.id) } : {}) });
+  }
+  return out;
+}
+
 /** 按层级深度稳定排序，父排子前（xyflow 要求父节点先于子节点）。 */
 export function orderParentFirst(nodes: DmNode[]): DmNode[] {
   const byId = nodeMap(nodes);

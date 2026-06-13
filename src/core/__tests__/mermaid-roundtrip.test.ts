@@ -41,6 +41,24 @@ describe("mermaid 官方解析器集成（jsdom）", () => {
     expect(g.edges[0]).toMatchObject({ source: "A", target: "B", data: { label: "go", style: "dashed" } });
   });
 
+  test("subgraph 往返：toMermaid → parseFlow → flowToGraph 还原分组 + parentId", async () => {
+    const doc: DmDocument = {
+      version: 1,
+      nodes: [
+        { id: "g1", kind: "subgraph", position: { x: 0, y: 0 }, data: { label: "后端" } },
+        { id: "A", kind: "rect", position: { x: 0, y: 0 }, data: { label: "A" }, parentId: "g1" },
+        { id: "B", kind: "rect", position: { x: 0, y: 0 }, data: { label: "B" } },
+      ],
+      edges: [{ id: "e_1", source: "A", target: "B" }],
+      meta: { title: "t", diagramType: "flowchart" },
+    };
+    const g = flowToGraph(await parseFlow(toMermaid(doc)));
+    const byId = Object.fromEntries(g.nodes.map((n) => [n.id, n]));
+    expect(byId.A.parentId).toBe("g1");
+    expect(byId.g1.kind).toBe("subgraph");
+    expect(byId.g1.data.label).toBe("后端");
+  });
+
   test("stateDiagram 文本 → parseState → stateToGraph", async () => {
     const g = stateToGraph(await parseState("stateDiagram-v2\n  s1 : 空闲\n  s1 --> s2 : 启动"));
     expect(g.nodes.map((n) => [n.id, n.data.label])).toEqual([

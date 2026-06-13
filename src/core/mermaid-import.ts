@@ -1,4 +1,5 @@
 import type { DmEdge, DmNode, EdgeArrow, EdgeStyle, FlowDirection } from "./types";
+import { SUBGRAPH_KIND } from "./subgraph";
 
 /**
  * mermaid flowchart 原始解析结果 → 我们的节点/边（纯映射，可测）。
@@ -44,6 +45,8 @@ export interface RawFlow {
   vertices: Record<string, RawVertex>;
   edges: RawEdge[];
   direction?: string;
+  /** mermaid getSubGraphs()：成员 nodes 含直接子节点 id 与子容器 id（嵌套）。 */
+  subGraphs?: { id: string; nodes: string[]; title?: string }[];
 }
 
 /** mermaid 顶点 type → 我们的形状 kind（收敛到标准集；未知回退 rect）。 */
@@ -108,11 +111,25 @@ function boxSize(lines: number): { width: number; height: number } {
 
 /** flowchart 原始解析 → 节点(无 position，由导入动作布局) + 边 + 方向。 */
 export function flowToGraph(raw: RawFlow): ImportGraph {
-  const nodes = Object.values(raw.vertices).map((v) => ({
+  // 成员 id → 所属容器 id（直接父）；容器成员里既有节点 id 也有子容器 id（嵌套）。
+  const parentOf = new Map<string, string>();
+  for (const sg of raw.subGraphs ?? []) for (const m of sg.nodes) parentOf.set(m, sg.id);
+
+  const nodes: Omit<DmNode, "position">[] = Object.values(raw.vertices).map((v) => ({
     id: v.id,
     kind: SHAPE_KIND[v.type ?? ""] ?? "rect",
     data: { label: v.text ?? v.id, ...parseStyles(v.styles) },
+    ...(parentOf.has(v.id) ? { parentId: parentOf.get(v.id) } : {}),
   }));
+  // 容器节点（无 position/size，由导入动作 layoutWithGroups 填）
+  for (const sg of raw.subGraphs ?? []) {
+    nodes.push({
+      id: sg.id,
+      kind: SUBGRAPH_KIND,
+      data: { label: sg.title ?? sg.id },
+      ...(parentOf.has(sg.id) ? { parentId: parentOf.get(sg.id) } : {}),
+    });
+  }
   const edges = raw.edges.map((e, i) => {
     const arrow = EDGE_ARROW[e.type ?? ""] ?? "end";
     const style = EDGE_STYLE[e.stroke ?? ""] ?? "solid";

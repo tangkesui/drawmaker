@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   absolutePos,
   childIds,
+  layoutWithGroups,
   nodeMap,
   orderParentFirst,
   subtreeIds,
@@ -58,6 +59,23 @@ describe("subgraph 坐标换算 + 子树", () => {
   test("childIds 只取直接子级", () => {
     expect(childIds("G1", nodes).sort()).toEqual(["B", "G2"]);
     expect(childIds("G2", nodes)).toEqual(["A"]);
+  });
+
+  test("layoutWithGroups：叶子绝对 → 容器包围框 + 子节点转相对", () => {
+    const ns: DmNode[] = [
+      node("g1", 0, 0, undefined, SUBGRAPH_KIND),
+      node("A", 0, 0, "g1"),
+      node("B", 0, 0, "g1"),
+    ];
+    const leafAbs = new Map([
+      ["A", { x: 100, y: 100 }],
+      ["B", { x: 300, y: 100 }],
+    ]);
+    const out = layoutWithGroups(ns, leafAbs, () => ({ width: 100, height: 50 }), 20, 26);
+    // bbox x:100..400 y:100..150 → 容器 abs x=80 y=54，w=340 h=116
+    expect(out.get("g1")).toEqual({ position: { x: 80, y: 54 }, size: { width: 340, height: 116 } });
+    expect(out.get("A")!.position).toEqual({ x: 20, y: 46 }); // 100-80,100-54
+    expect(out.get("B")!.position).toEqual({ x: 220, y: 46 });
   });
 
   test("orderParentFirst：父排子前，同层稳定", () => {

@@ -1,6 +1,8 @@
 import { computeLayout } from "../canvas/auto-layout";
+import { getShape } from "../canvas/shapes/registry";
 import { viewport } from "../canvas/viewport-controls";
 import { commit } from "../core/history";
+import { layoutWithGroups, SUBGRAPH_KIND } from "../core/subgraph";
 import {
   c4ToGraph,
   classToGraph,
@@ -84,20 +86,44 @@ export async function importMermaidFromText(text: string): Promise<ImportResult>
   const { type, graph } = built;
   if (graph.nodes.length === 0) return { ok: false, msg: "没有解析到节点" };
 
-  const prevPos = new Map(useEditorStore.getState().doc.nodes.map((n) => [n.id, n.position]));
   const dir = graph.direction === "LR" || graph.direction === "RL" ? "LR" : "TB";
-  const tmp: DmDocument = {
-    version: 1,
-    nodes: graph.nodes.map((n) => ({ ...n, position: { x: 0, y: 0 } })),
-    edges: graph.edges,
-    meta: { title: "", direction: graph.direction },
-  };
-  const layout = computeLayout(tmp, dir);
+  const hasGroups = graph.nodes.some((n) => n.kind === SUBGRAPH_KIND);
 
-  const nodes: DmNode[] = graph.nodes.map((n) => ({
-    ...n,
-    position: prevPos.get(n.id) ?? layout.get(n.id) ?? { x: 0, y: 0 },
-  }));
+  let nodes: DmNode[];
+  if (hasGroups) {
+    // 含分组：先 dagre 扁平布局叶子（忽略 parentId），再 layoutWithGroups 自底向上算容器框 + 转相对。
+    const leaves = graph.nodes.filter((n) => n.kind !== SUBGRAPH_KIND);
+    const tmp: DmDocument = {
+      version: 1,
+      nodes: leaves.map((n) => ({ ...n, position: { x: 0, y: 0 }, parentId: undefined })),
+      edges: graph.edges,
+      meta: { title: "", direction: graph.direction },
+    };
+    const leafAbs = computeLayout(tmp, dir);
+    const sizeOf = new Map(graph.nodes.map((n) => [n.id, n]));
+    const geom = layoutWithGroups(
+      graph.nodes as unknown as DmNode[],
+      leafAbs,
+      (id) => sizeOf.get(id)?.size ?? getShape(sizeOf.get(id)?.kind ?? "rect").defaultSize,
+    );
+    nodes = graph.nodes.map((n) => {
+      const g = geom.get(n.id)!;
+      return { ...n, position: g.position, ...(g.size ? { size: g.size } : {}) };
+    });
+  } else {
+    const prevPos = new Map(useEditorStore.getState().doc.nodes.map((n) => [n.id, n.position]));
+    const tmp: DmDocument = {
+      version: 1,
+      nodes: graph.nodes.map((n) => ({ ...n, position: { x: 0, y: 0 } })),
+      edges: graph.edges,
+      meta: { title: "", direction: graph.direction },
+    };
+    const layout = computeLayout(tmp, dir);
+    nodes = graph.nodes.map((n) => ({
+      ...n,
+      position: prevPos.get(n.id) ?? layout.get(n.id) ?? { x: 0, y: 0 },
+    }));
+  }
 
   commit("import mermaid", (d) => {
     d.nodes = nodes;

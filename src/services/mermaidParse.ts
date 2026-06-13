@@ -49,10 +49,16 @@ export async function parseFlow(text: string): Promise<RawFlow> {
     getVertices: () => Map<string, RawFlow["vertices"][string]> | RawFlow["vertices"];
     getEdges: () => RawFlow["edges"];
     getDirection?: () => string;
+    getSubGraphs?: () => RawFlow["subGraphs"];
   };
   const v = db.getVertices();
   const vertices = v instanceof Map ? Object.fromEntries(v) : v;
-  return { vertices, edges: db.getEdges(), direction: db.getDirection?.() };
+  return {
+    vertices,
+    edges: db.getEdges(),
+    direction: db.getDirection?.(),
+    subGraphs: db.getSubGraphs?.(),
+  };
 }
 
 /** db 上某个 getter 返回 Map/对象，统一成普通对象。 */

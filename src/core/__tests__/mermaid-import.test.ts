@@ -78,6 +78,23 @@ describe("flowToGraph（mermaid flowchart 解析 → 节点/边，纯映射）",
     expect(g.edges[2].data).toBeUndefined(); // normal + end 都是默认
   });
 
+  test("subGraphs → 容器节点 + 成员 parentId（含嵌套）", () => {
+    const raw: RawFlow = {
+      vertices: { A: { id: "A" }, C: { id: "C" } },
+      edges: [],
+      subGraphs: [
+        { id: "g2", nodes: ["C"], title: "内层" },
+        { id: "g1", nodes: ["A", "g2"], title: "后端" }, // g2 嵌套在 g1
+      ],
+    };
+    const byId = Object.fromEntries(flowToGraph(raw).nodes.map((n) => [n.id, n]));
+    expect(byId.A.parentId).toBe("g1");
+    expect(byId.C.parentId).toBe("g2");
+    expect(byId.g2).toMatchObject({ kind: "subgraph", parentId: "g1", data: { label: "内层" } });
+    expect(byId.g1).toMatchObject({ kind: "subgraph", data: { label: "后端" } });
+    expect(byId.g1.parentId).toBeUndefined();
+  });
+
   test("vertex.styles → fill/stroke/strokeWidth（颜色往返导入侧）", () => {
     const raw: RawFlow = {
       vertices: {
