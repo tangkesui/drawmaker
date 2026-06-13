@@ -1,11 +1,9 @@
 import { useEffect } from "react";
-import {
-  copySelection,
-  cutSelection,
-  duplicateSelection,
-  pasteClipboard,
-  selectAll,
-} from "../core/operations";
+import { copySelection, cutSelection, pasteClipboard } from "../core/clipboard-actions";
+import { duplicateSelection, selectAll } from "../core/operations";
+
+/** 复制/剪切/粘贴走系统剪贴板（异步）；keydown 里 fire-and-forget，吞掉偶发 IO 异常。 */
+const fire = (p: Promise<unknown>) => void p.catch(() => {});
 
 /** 焦点在可编辑元素里 → 交给系统做文字操作，不触发节点操作。 */
 function isEditable(target: EventTarget | null): boolean {
@@ -28,15 +26,15 @@ export function CanvasShortcuts() {
       switch (e.code) {
         case "KeyC":
           e.preventDefault();
-          copySelection();
+          fire(copySelection());
           break;
         case "KeyX":
           e.preventDefault();
-          cutSelection();
+          fire(cutSelection());
           break;
         case "KeyV":
           e.preventDefault();
-          pasteClipboard();
+          fire(pasteClipboard());
           break;
         case "KeyD":
           e.preventDefault();

@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { setClipboard } from "../clipboard";
+import { parseClip, serializeClip, type Clip } from "../clipboard";
 import { undo } from "../history";
 import {
   addNode,
   connectNodes,
-  copySelection,
-  cutSelection,
+  deleteNodes,
   duplicateSelection,
-  pasteClipboard,
+  getSelectionClip,
+  pasteClip,
   resizeNode,
   selectAll,
   __resetIds,
@@ -17,7 +17,6 @@ import { createInitialState, useEditorStore } from "../store";
 beforeEach(() => {
   useEditorStore.setState(createInitialState(), true);
   __resetIds();
-  setClipboard({ nodes: [], edges: [] });
 });
 
 const doc = () => useEditorStore.getState().doc;
@@ -26,14 +25,15 @@ const select = (ids: string[]) =>
   useEditorStore.setState((s) => ({ view: { ...s.view, selected: ids } }));
 
 describe("clipboard / duplicate / select", () => {
-  test("copy + paste duplicates selected nodes and internal edges; undo reverts", () => {
+  test("getSelectionClip + pasteClip duplicates selected nodes and internal edges; undo reverts", () => {
     const a = addNode("rect", { x: 0, y: 0 });
     const b = addNode("ellipse", { x: 100, y: 0 });
     connectNodes(a, b);
     select([a, b]);
 
-    copySelection();
-    pasteClipboard();
+    const clip = getSelectionClip();
+    expect(clip).not.toBeNull();
+    pasteClip(clip!);
     expect(doc().nodes).toHaveLength(4);
     expect(doc().edges).toHaveLength(2);
     expect(selected()).toHaveLength(2); // 粘贴出的新节点被选中
@@ -43,33 +43,36 @@ describe("clipboard / duplicate / select", () => {
     expect(doc().edges).toHaveLength(1);
   });
 
-  test("paste offsets position and assigns new ids", () => {
+  test("pasteClip offsets position and assigns new ids", () => {
     const a = addNode("rect", { x: 10, y: 20 });
     select([a]);
-    copySelection();
-    pasteClipboard();
+    pasteClip(getSelectionClip()!);
     const pasted = doc().nodes[1];
     expect(pasted.id).not.toBe(a);
     expect(pasted.position).toEqual({ x: 34, y: 44 });
   });
 
-  test("only edges with both endpoints selected are copied", () => {
+  test("getSelectionClip only includes edges with both endpoints selected", () => {
     const a = addNode("rect", { x: 0, y: 0 });
     const b = addNode("rect", { x: 100, y: 0 });
     connectNodes(a, b);
     select([a]); // 只选 a
-    copySelection();
-    pasteClipboard();
-    expect(doc().nodes).toHaveLength(3);
-    expect(doc().edges).toHaveLength(1); // 不复制悬空边
+    const clip = getSelectionClip()!;
+    expect(clip.nodes).toHaveLength(1);
+    expect(clip.edges).toHaveLength(0); // 不含悬空边
   });
 
-  test("cut removes selection into clipboard; paste restores", () => {
+  test("getSelectionClip returns null for empty selection", () => {
+    expect(getSelectionClip()).toBeNull();
+  });
+
+  test("cut semantics: snapshot clip → delete → paste restores", () => {
     const a = addNode("rect", { x: 0, y: 0 });
     select([a]);
-    cutSelection();
+    const clip = getSelectionClip()!;
+    deleteNodes([a]);
     expect(doc().nodes).toHaveLength(0);
-    pasteClipboard();
+    pasteClip(clip);
     expect(doc().nodes).toHaveLength(1);
   });
 
@@ -93,5 +96,23 @@ describe("clipboard / duplicate / select", () => {
     expect(doc().nodes[0].size).toEqual({ width: 200, height: 120 });
     undo();
     expect(doc().nodes[0].size).toBeUndefined();
+  });
+});
+
+describe("clip serialize / parse (系统剪贴板文本)", () => {
+  const clip: Clip = {
+    nodes: [{ id: "n_1", kind: "rect", position: { x: 1, y: 2 }, data: { label: "A" } }],
+    edges: [{ id: "e_1", source: "n_1", target: "n_1", sourceHandle: null, targetHandle: null }],
+  };
+
+  test("round-trips a clip through system-clipboard text", () => {
+    expect(parseClip(serializeClip(clip))).toEqual(clip);
+  });
+
+  test("rejects external / empty / non-drawmaker text", () => {
+    expect(parseClip("")).toBeNull();
+    expect(parseClip("从备忘录复制的一段文字")).toBeNull();
+    expect(parseClip("{ broken json")).toBeNull();
+    expect(parseClip(JSON.stringify({ nodes: [], edges: [] }))).toBeNull(); // 缺 magic 标识
   });
 });

@@ -1,17 +1,30 @@
 import type { DmEdge, DmNode } from "./types";
 
-/** App 内部剪贴板（仅 drawmaker 内）。文字编辑用系统剪贴板，与此无关。 */
+/** 一份可复制的子图（选中节点 + 两端都在选区内的边）。 */
 export interface Clip {
   nodes: DmNode[];
   edges: DmEdge[];
 }
 
-let clip: Clip | null = null;
+/** 系统剪贴板里 drawmaker 内容的标识；粘贴时据此区分自家内容与外部文本。 */
+const MAGIC = "drawmaker/clip@1";
 
-export function setClipboard(c: Clip): void {
-  clip = c;
+/** Clip → 系统剪贴板文本（带 magic 标识的 JSON）。 */
+export function serializeClip(clip: Clip): string {
+  return JSON.stringify({ __drawmaker: MAGIC, nodes: clip.nodes, edges: clip.edges });
 }
 
-export function getClipboard(): Clip | null {
-  return clip;
+/** 系统剪贴板文本 → Clip；非 drawmaker 内容（外部文本 / 空 / 非法 JSON）返回 null。 */
+export function parseClip(text: string): Clip | null {
+  if (!text) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null) return null;
+  const o = parsed as Record<string, unknown>;
+  if (o.__drawmaker !== MAGIC || !Array.isArray(o.nodes) || !Array.isArray(o.edges)) return null;
+  return { nodes: o.nodes as DmNode[], edges: o.edges as DmEdge[] };
 }
