@@ -314,20 +314,24 @@ function CanvasInner() {
     [screenToFlowPosition],
   );
 
-  // 编组：选中的顶层节点 → 包围框（含标题栏 + padding）→ groupNodes。解组：选中的容器。
+  // 编组：取选区的共同父（全相同才用，否则顶层），把同层成员收进新容器（支持组里再组 / 嵌容器）。
   const doGroup = useCallback(() => {
-    const sel = useEditorStore.getState().view.selected;
-    const picked = rf.getNodes().filter((n) => sel.includes(n.id) && !n.parentId && n.type !== SUBGRAPH_KIND);
-    if (picked.length < 1) return;
-    const b = getNodesBounds(picked);
+    const { doc, view } = useEditorStore.getState();
+    const selNodes = doc.nodes.filter((n) => view.selected.includes(n.id));
+    if (selNodes.length < 1) return;
+    const parents = new Set(selNodes.map((n) => n.parentId));
+    const commonParent = parents.size === 1 ? selNodes[0].parentId : undefined;
+    const members = selNodes.filter((n) => n.parentId === commonParent);
+    const fns = members.map((n) => rf.getNode(n.id)).filter((n): n is FlowNode => !!n);
+    if (fns.length < 1) return;
+    const b = getNodesBounds(fns);
     const pad = 20;
     const titleH = 26;
-    groupNodes(picked.map((n) => n.id), {
-      x: b.x - pad,
-      y: b.y - pad - titleH,
-      width: b.width + pad * 2,
-      height: b.height + pad * 2 + titleH,
-    });
+    groupNodes(
+      members.map((n) => n.id),
+      { x: b.x - pad, y: b.y - pad - titleH, width: b.width + pad * 2, height: b.height + pad * 2 + titleH },
+      commonParent,
+    );
   }, [rf]);
 
   const doUngroup = useCallback(() => {

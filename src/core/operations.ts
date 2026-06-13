@@ -148,24 +148,29 @@ export function deleteNodes(ids: string[]): void {
  */
 export function groupNodes(
   childIds: string[],
-  rect: { x: number; y: number; width: number; height: number },
+  rectAbs: { x: number; y: number; width: number; height: number },
+  parentId?: string,
   label = "组",
 ): string {
   const id = nextId("g");
   const set = new Set(childIds);
   commit("group", (d) => {
+    const byId = nodeMap(d.nodes);
+    const parentAbs = parentId ? absolutePos(byId.get(parentId)!, byId) : { x: 0, y: 0 };
     for (const n of d.nodes) {
       if (set.has(n.id)) {
+        const nAbs = absolutePos(n, byId); // 先取绝对，再改父（支持嵌套：成员可在某容器内）
         n.parentId = id;
-        n.position = { x: n.position.x - rect.x, y: n.position.y - rect.y };
+        n.position = { x: nAbs.x - rectAbs.x, y: nAbs.y - rectAbs.y };
       }
     }
     d.nodes.push({
       id,
       kind: SUBGRAPH_KIND,
-      position: { x: rect.x, y: rect.y },
-      size: { width: rect.width, height: rect.height },
+      position: { x: rectAbs.x - parentAbs.x, y: rectAbs.y - parentAbs.y },
+      size: { width: rectAbs.width, height: rectAbs.height },
       data: { label },
+      ...(parentId ? { parentId } : {}),
     });
   });
   setSelected([id]);

@@ -114,7 +114,7 @@ describe("clipboard / duplicate / select", () => {
   test("groupNodes：建容器、子节点 parentId + 位置转相对；ungroup 还原绝对、删容器", () => {
     const a = addNode("rect", { x: 100, y: 100 });
     const b = addNode("rect", { x: 200, y: 140 });
-    const gid = groupNodes([a, b], { x: 80, y: 60, width: 200, height: 140 }, "后端");
+    const gid = groupNodes([a, b], { x: 80, y: 60, width: 200, height: 140 }, undefined, "后端");
 
     const group = doc().nodes.find((n) => n.id === gid)!;
     expect(group.kind).toBe("subgraph");
@@ -142,6 +142,18 @@ describe("clipboard / duplicate / select", () => {
     const aNode = doc().nodes.find((n) => n.id === a)!;
     expect(aNode.parentId).toBeUndefined();
     expect(aNode.position).toEqual({ x: 300, y: 300 });
+  });
+
+  test("groupNodes 嵌套：在容器内再建子组（parentId + 绝对换算）", () => {
+    const a = addNode("rect", { x: 100, y: 100 });
+    const g1 = groupNodes([a], { x: 80, y: 60, width: 300, height: 300 }); // a 相对 g1 = (20,40)，绝对 (100,100)
+    const g2 = groupNodes([a], { x: 90, y: 90, width: 120, height: 80 }, g1); // 在 g1 内对 a 再建组
+    const g2node = doc().nodes.find((n) => n.id === g2)!;
+    expect(g2node.parentId).toBe(g1);
+    expect(g2node.position).toEqual({ x: 10, y: 30 }); // 90-80,90-60
+    const aNode = doc().nodes.find((n) => n.id === a)!;
+    expect(aNode.parentId).toBe(g2);
+    expect(aNode.position).toEqual({ x: 10, y: 10 }); // 绝对 100,100 - g2 绝对 90,90
   });
 
   test("删容器连带删子树（避免孤儿 parentId）", () => {
