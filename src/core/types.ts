@@ -51,8 +51,51 @@ export interface DmEdge {
   data?: EdgeData;
 }
 
+/** mermaid flowchart 图方向。 */
+export type FlowDirection = "TD" | "LR" | "RL" | "BT";
+
+/** graph 家族：以"节点+连线"建模（用画布编辑）。 */
+export type GraphDiagramType =
+  | "flowchart"
+  | "state"
+  | "class"
+  | "er"
+  | "sequence"
+  | "c4"
+  | "mindmap";
+
+/** 数据/时间家族：结构化数据（标题 + 行表 + 配置），用表格编辑器编辑，非画布。 */
+export type DataDiagramType = "pie" | "gantt" | "timeline" | "journey" | "quadrant" | "xychart";
+
+export type DiagramType = GraphDiagramType | DataDiagramType;
+
+/** 运行时判断：哪些图表类型走数据编辑器（而非节点-连线画布）。 */
+export const DATA_DIAGRAM_TYPES: DataDiagramType[] = [
+  "pie",
+  "gantt",
+  "timeline",
+  "journey",
+  "quadrant",
+  "xychart",
+];
+
+export function isDataDiagram(t: DiagramType): t is DataDiagramType {
+  return (DATA_DIAGRAM_TYPES as string[]).includes(t);
+}
+
+/** 数据/时间家族图表的内容：标题 + 标量配置 + 行表（每行是按列 key 的字符串字段）。 */
+export interface DataDiagram {
+  title: string;
+  config: Record<string, string>;
+  rows: Record<string, string>[];
+}
+
 export interface DocumentMeta {
   title: string;
+  /** mermaid 导出方向，缺省 TD（旧 .dm 无此字段照常加载）。 */
+  direction?: FlowDirection;
+  /** mermaid 图表类型，缺省 flowchart（旧 .dm 无此字段照常加载）。 */
+  diagramType?: DiagramType;
 }
 
 export interface DmDocument {
@@ -60,6 +103,8 @@ export interface DmDocument {
   nodes: DmNode[];
   edges: DmEdge[];
   meta: DocumentMeta;
+  /** 数据/时间家族图表内容（按类型分存；graph 家族用 nodes/edges）。缺省 = 未编辑过。 */
+  data?: Partial<Record<DataDiagramType, DataDiagram>>;
 }
 
 /** View state — 不入 history（hover / 缩放 / 选区）。形状放置走调色板拖放，无工具模式。 */

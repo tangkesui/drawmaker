@@ -9,18 +9,20 @@ import {
   save,
   saveAs,
 } from "../core/document-actions";
+import { copySelection, cutSelection, pasteClipboard } from "../core/clipboard-actions";
 import { redo, undo } from "../core/history";
-import {
-  copySelection,
-  cutSelection,
-  deleteNodes,
-  duplicateSelection,
-  pasteClipboard,
-  selectAll,
-} from "../core/operations";
+import { deleteNodes, duplicateSelection, selectAll } from "../core/operations";
 import { useEditorStore } from "../core/store";
-import { exportPdf, exportPng, exportSvg } from "./exportService";
-import { showError } from "./notify";
+import { readClipboardText } from "./clipboardService";
+import { copyMermaid, exportMermaid, exportPdf, exportPng, exportSvg } from "./exportService";
+import { importMermaidFromText } from "./importMermaid";
+import { showError, showInfo } from "./notify";
+
+/** 从系统剪贴板读 mermaid 文本并导入为可拖拽画布。 */
+async function importMermaidFromClipboard(): Promise<void> {
+  const result = await importMermaidFromText(await readClipboardText());
+  if (!result.ok) await showInfo(result.msg ?? "导入失败");
+}
 
 /** 把异步 action 包成 MenuItem 的 (id)=>void 回调，错误走原生对话框。 */
 const run = (action: () => Promise<unknown>) => () => {
@@ -58,6 +60,11 @@ async function buildMenu(): Promise<Menu> {
     items: [
       await MenuItem.new({ text: "New", accelerator: "CmdOrCtrl+N", action: run(newDocument) }),
       await MenuItem.new({ text: "Open…", accelerator: "CmdOrCtrl+O", action: run(openViaDialog) }),
+      await MenuItem.new({
+        text: "Import Mermaid（剪贴板）",
+        accelerator: "CmdOrCtrl+Shift+V",
+        action: run(importMermaidFromClipboard),
+      }),
       await buildRecentSubmenu(),
       await PredefinedMenuItem.new({ item: "Separator" }),
       await MenuItem.new({ text: "Save", accelerator: "CmdOrCtrl+S", action: run(save) }),
@@ -66,10 +73,17 @@ async function buildMenu(): Promise<Menu> {
       await Submenu.new({
         text: "Export",
         items: [
+          await MenuItem.new({ text: "Mermaid (.mmd)…", action: run(exportMermaid) }),
+          await PredefinedMenuItem.new({ item: "Separator" }),
           await MenuItem.new({ text: "SVG…", action: run(exportSvg) }),
           await MenuItem.new({ text: "PNG…", action: run(exportPng) }),
           await MenuItem.new({ text: "PDF…", action: run(exportPdf) }),
         ],
+      }),
+      await MenuItem.new({
+        text: "Copy as Mermaid",
+        accelerator: "CmdOrCtrl+Shift+M",
+        action: run(copyMermaid),
       }),
       await PredefinedMenuItem.new({ item: "Separator" }),
       await PredefinedMenuItem.new({ item: "CloseWindow" }),
@@ -84,9 +98,9 @@ async function buildMenu(): Promise<Menu> {
       await PredefinedMenuItem.new({ item: "Separator" }),
       // 不绑 accelerator：⌘C/⌘X/⌘V/⌘D/⌘A 由 CanvasShortcuts 带焦点 guard 处理，
       // 避免无差别拦截文本框里的文字复制粘贴。
-      await MenuItem.new({ text: "Cut (⌘X)", action: () => cutSelection() }),
-      await MenuItem.new({ text: "Copy (⌘C)", action: () => copySelection() }),
-      await MenuItem.new({ text: "Paste (⌘V)", action: () => pasteClipboard() }),
+      await MenuItem.new({ text: "Cut (⌘X)", action: run(cutSelection) }),
+      await MenuItem.new({ text: "Copy (⌘C)", action: run(copySelection) }),
+      await MenuItem.new({ text: "Paste (⌘V)", action: run(pasteClipboard) }),
       await MenuItem.new({ text: "Duplicate (⌘D)", action: () => duplicateSelection() }),
       await PredefinedMenuItem.new({ item: "Separator" }),
       await MenuItem.new({ text: "Select All (⌘A)", action: () => selectAll() }),

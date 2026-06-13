@@ -1,0 +1,146 @@
+.mermaid-panel {
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  height: 100%;
+  box-sizing: border-box;
+  background: #1e293b; /* 深色，凸显「这是 mermaid 代码」 */
+  border-left: 1px solid #d8dce1;
+}
+
+.mermaid-panel.collapsed {
+  width: 28px;
+  align-items: center;
+  justify-content: center;
+  background: #f5f6f8;
+  cursor: pointer;
+}
+
+.mermaid-tab-label {
+  writing-mode: vertical-rl;
+  font-size: 11px;
+  color: #6b7280;
+  user-select: none;
+}
+
+.mermaid-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid #334155;
+}
+
+.mermaid-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.mermaid-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.mermaid-actions button {
+  padding: 2px 8px;
+  font-size: 11px;
+  color: #e2e8f0;
+  background: #334155;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.mermaid-actions button:hover {
+  background: #475569;
+}
+
+.mermaid-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid #334155;
+}
+
+.mermaid-sub label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.mermaid-sub select {
+  padding: 2px 6px;
+  font-size: 11px;
+  color: #e2e8f0;
+  background: #334155;
+  border: 1px solid #475569;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.mermaid-code {
+  flex: 1;
+  margin: 0;
+  padding: 10px;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #e2e8f0;
+  white-space: pre;
+  user-select: text;
+}
+
+/* 可编辑文本框（文本→画布双向）：同代码外观，去掉默认 textarea 样式。 */
+.mermaid-edit {
+  width: 100%;
+  box-sizing: border-box;
+  background: #1e293b;
+  border: none;
+  resize: none;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.mermaid-edit:focus {
+  outline: none;
+}
+
+.mermaid-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid #334155;
+}
+
+.mermaid-dirty {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.mermaid-apply {
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #ffffff;
+  background: #2f6fed;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.mermaid-apply:disabled {
+  color: #94a3b8;
+  background: #334155;
+  cursor: default;
+}
+
+.mermaid-apply:not(:disabled):hover {
+  background: #2560d8;
+}

@@ -34,5 +34,6 @@ export function deserializeDocument(text: string): DmDocument {
     nodes: doc.nodes,
     edges: doc.edges,
     meta: doc.meta ?? { title: "Untitled" },
+    ...(doc.data ? { data: doc.data } : {}),
   };
 }

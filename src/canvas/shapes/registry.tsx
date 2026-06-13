@@ -15,6 +15,85 @@ export interface ShapeDef {
 }
 
 const SHAPES: ShapeDef[] = [
+  // ---- Mermaid 标准形状（flowchart）----
+  // 通用分类里的 rect/rounded/ellipse/diamond 也映射 mermaid 标准形状；
+  // 这里补齐它们之外的标准 flowchart 形状，kind 与 mermaid 形状语义一一对应。
+  {
+    kind: "stadium",
+    label: "体育场",
+    category: "Mermaid",
+    defaultSize: { width: 140, height: 56 },
+    render: (w, h) => <rect x={1} y={1} width={w - 2} height={h - 2} rx={(h - 2) / 2} />,
+  },
+  {
+    kind: "subroutine",
+    label: "子程序",
+    category: "Mermaid",
+    defaultSize: { width: 150, height: 56 },
+    render: (w, h) => (
+      <>
+        <rect x={1} y={1} width={w - 2} height={h - 2} rx={2} />
+        <line x1={8} y1={1} x2={8} y2={h - 1} fill="none" />
+        <line x1={w - 8} y1={1} x2={w - 8} y2={h - 1} fill="none" />
+      </>
+    ),
+  },
+  {
+    kind: "cylinder",
+    label: "圆柱",
+    category: "Mermaid",
+    defaultSize: { width: 100, height: 110 },
+    render: (w, h) => {
+      const ry = Math.min(h * 0.16, 16);
+      return (
+        <>
+          <path
+            d={`M1,${ry} A ${w / 2 - 1} ${ry} 0 0 1 ${w - 1},${ry} L ${w - 1},${h - ry} A ${w / 2 - 1} ${ry} 0 0 1 1,${h - ry} Z`}
+          />
+          <path d={`M1,${ry} A ${w / 2 - 1} ${ry} 0 0 0 ${w - 1},${ry}`} fill="none" />
+        </>
+      );
+    },
+  },
+  {
+    kind: "circle",
+    label: "圆",
+    category: "Mermaid",
+    defaultSize: { width: 88, height: 88 },
+    render: (w, h) => <circle cx={w / 2} cy={h / 2} r={Math.min(w, h) / 2 - 1} />,
+  },
+  {
+    kind: "hexagon",
+    label: "六边形",
+    category: "Mermaid",
+    defaultSize: { width: 140, height: 72 },
+    render: (w, h) => {
+      const i = Math.min(w * 0.2, 24);
+      return (
+        <polygon points={`${i},1 ${w - i},1 ${w - 1},${h / 2} ${w - i},${h - 1} ${i},${h - 1} 1,${h / 2}`} />
+      );
+    },
+  },
+  {
+    kind: "parallelogram",
+    label: "平行四边形",
+    category: "Mermaid",
+    defaultSize: { width: 150, height: 60 },
+    render: (w, h) => {
+      const s = Math.min(w * 0.2, 26);
+      return <polygon points={`${s},1 ${w - 1},1 ${w - s},${h - 1} 1,${h - 1}`} />;
+    },
+  },
+  {
+    kind: "trapezoid",
+    label: "梯形",
+    category: "Mermaid",
+    defaultSize: { width: 150, height: 64 },
+    render: (w, h) => {
+      const s = Math.min(w * 0.2, 28);
+      return <polygon points={`${s},1 ${w - s},1 ${w - 1},${h - 1} 1,${h - 1}`} />;
+    },
+  },
   // ---- 通用 ----
   {
     kind: "rect",

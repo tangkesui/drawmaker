@@ -1,13 +1,16 @@
 import { useEffect } from "react";
 import { loadRecentList } from "./core/document-actions";
 import { useEditorStore } from "./core/store";
+import { isDataDiagram, type DataDiagramType } from "./core/types";
 import { Canvas } from "./canvas/Canvas";
+import { DataEditor } from "./ui/DataEditor";
 import { initDragDrop } from "./services/dragDropService";
 import { initMenu } from "./services/menuService";
 import { showError } from "./services/notify";
 import { initCloseGuard } from "./services/windowService";
 import { PropertiesPanel } from "./ui/PropertiesPanel";
 import { CanvasShortcuts } from "./ui/CanvasShortcuts";
+import { MermaidPanel } from "./ui/MermaidPanel";
 import { ShapePalette } from "./ui/ShapePalette";
 import { TitleSync } from "./ui/TitleSync";
 import { Toolbar } from "./ui/Toolbar";
@@ -41,14 +44,25 @@ export default function App() {
       <TitleSync />
       <CanvasShortcuts />
       <Toolbar />
-      <div className="workspace">
-        <ShapePalette />
-        <main className="canvas-area">
-          <Canvas />
-        </main>
-        <PropertiesPanel />
-      </div>
+      <Workspace />
       <StatusBar />
+    </div>
+  );
+}
+
+/** 工作区：graph 家族用节点-连线画布；数据/时间家族用表格编辑器。 */
+function Workspace() {
+  const diagramType = useEditorStore((s) => s.doc.meta.diagramType ?? "flowchart");
+  const dataMode = isDataDiagram(diagramType);
+
+  return (
+    <div className="workspace">
+      {!dataMode && <ShapePalette />}
+      <main className="canvas-area">
+        {dataMode ? <DataEditor type={diagramType as DataDiagramType} /> : <Canvas />}
+      </main>
+      {!dataMode && <PropertiesPanel />}
+      <MermaidPanel />
     </div>
   );
 }

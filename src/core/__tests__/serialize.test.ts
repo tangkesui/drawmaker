@@ -46,4 +46,15 @@ describe("serialize", () => {
     const text = JSON.stringify({ version: 1, nodes: [], edges: [] });
     expect(deserializeDocument(text).meta).toEqual({ title: "Untitled" });
   });
+
+  test("round-trips data-family content (data/时间家族存盘)", () => {
+    const withData: DmDocument = {
+      version: 1,
+      nodes: [],
+      edges: [],
+      meta: { title: "饼图", diagramType: "pie" },
+      data: { pie: { title: "宠物", config: {}, rows: [{ label: "狗", value: "10" }] } },
+    };
+    expect(deserializeDocument(serializeDocument(withData))).toEqual(withData);
+  });
 });

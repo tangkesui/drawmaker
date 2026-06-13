@@ -1,5 +1,16 @@
-import type { DmDocument, DmEdge, DmNode, EdgeData, NodeData, NodeKind } from "./types";
-import { getClipboard, setClipboard } from "./clipboard";
+import type {
+  DataDiagram,
+  DataDiagramType,
+  DiagramType,
+  DmDocument,
+  DmEdge,
+  DmNode,
+  EdgeData,
+  FlowDirection,
+  NodeData,
+  NodeKind,
+} from "./types";
+import type { Clip } from "./clipboard";
 import { commit } from "./history";
 import { useEditorStore } from "./store";
 
@@ -126,6 +137,60 @@ export function reconnectEdge(
   });
 }
 
+/** 设置 mermaid 导出方向（document 内容，入 history）。 */
+export function setDirection(dir: FlowDirection): void {
+  commit("direction", (d) => {
+    d.meta.direction = dir;
+  });
+}
+
+/** 设置 mermaid 图表类型（document 内容，入 history）。 */
+export function setDiagramType(type: DiagramType): void {
+  commit("diagram type", (d) => {
+    d.meta.diagramType = type;
+  });
+}
+
+// ---- 数据/时间家族图表编辑（标题 + 配置 + 行表，均入 history）----
+
+/** 取/建 doc.data[type] 的 draft 子树。 */
+function ensureData(d: DmDocument, type: DataDiagramType): DataDiagram {
+  if (!d.data) d.data = {};
+  if (!d.data[type]) d.data[type] = { title: "", config: {}, rows: [] };
+  return d.data[type]!;
+}
+
+export function setDataTitle(type: DataDiagramType, title: string): void {
+  commit("data title", (d) => {
+    ensureData(d, type).title = title;
+  });
+}
+
+export function setDataConfig(type: DataDiagramType, key: string, value: string): void {
+  commit("data config", (d) => {
+    ensureData(d, type).config[key] = value;
+  });
+}
+
+export function addDataRow(type: DataDiagramType): void {
+  commit("data row +", (d) => {
+    ensureData(d, type).rows.push({});
+  });
+}
+
+export function setDataCell(type: DataDiagramType, index: number, key: string, value: string): void {
+  commit("data cell", (d) => {
+    const row = ensureData(d, type).rows[index];
+    if (row) row[key] = value;
+  });
+}
+
+export function deleteDataRow(type: DataDiagramType, index: number): void {
+  commit("data row -", (d) => {
+    ensureData(d, type).rows.splice(index, 1);
+  });
+}
+
 /** resize 后提交节点尺寸（一条 command）。 */
 export function resizeNode(id: string, size: { width: number; height: number }): void {
   commit("resize", (d) => {
@@ -144,26 +209,17 @@ export function selectAll(): void {
   setSelected(useEditorStore.getState().doc.nodes.map((n) => n.id));
 }
 
-/** 当前选区里：选中节点 + 两端都在选区内的边。 */
-function selectionSubgraph(): { nodes: DmNode[]; edges: DmEdge[] } {
+/**
+ * 当前选区的可复制子图（选中节点 + 两端都在选区内的边，深拷贝）。空选区返回 null。
+ * 纯逻辑：复制/剪切到系统剪贴板的 IO 在 clipboard-actions 层组合。
+ */
+export function getSelectionClip(): Clip | null {
   const { doc, view } = useEditorStore.getState();
   const sel = new Set(view.selected);
-  return {
-    nodes: doc.nodes.filter((n) => sel.has(n.id)),
-    edges: doc.edges.filter((e) => sel.has(e.source) && sel.has(e.target)),
-  };
-}
-
-export function copySelection(): void {
-  const { nodes, edges } = selectionSubgraph();
-  if (nodes.length === 0) return;
-  setClipboard({ nodes: nodes.map((n) => structuredClone(n)), edges: edges.map((e) => structuredClone(e)) });
-}
-
-export function cutSelection(): void {
-  const ids = useEditorStore.getState().view.selected;
-  copySelection();
-  deleteNodes(ids);
+  const nodes = doc.nodes.filter((n) => sel.has(n.id));
+  if (nodes.length === 0) return null;
+  const edges = doc.edges.filter((e) => sel.has(e.source) && sel.has(e.target));
+  return { nodes: nodes.map((n) => structuredClone(n)), edges: edges.map((e) => structuredClone(e)) };
 }
 
 const PASTE_OFFSET = 24;
@@ -194,12 +250,12 @@ function placeCopies(srcNodes: DmNode[], srcEdges: DmEdge[], label: string): voi
   });
 }
 
-export function pasteClipboard(): void {
-  const clip = getClipboard();
-  if (clip) placeCopies(clip.nodes, clip.edges, "paste");
+/** 放置一个 clip（新 id、偏移、选中新副本），整批一条 command。 */
+export function pasteClip(clip: Clip): void {
+  placeCopies(clip.nodes, clip.edges, "paste");
 }
 
 export function duplicateSelection(): void {
-  const { nodes, edges } = selectionSubgraph();
-  placeCopies(nodes, edges, "duplicate");
+  const clip = getSelectionClip();
+  if (clip) placeCopies(clip.nodes, clip.edges, "duplicate");
 }

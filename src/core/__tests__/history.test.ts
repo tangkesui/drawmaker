@@ -7,6 +7,7 @@ import {
   moveNodes,
   reconnectEdge,
   renameEdge,
+  setDirection,
   updateEdgeStyle,
   updateNodeStyle,
   __resetIds,
@@ -139,6 +140,14 @@ describe("history (patch-based)", () => {
     expect(doc().edges[0]).toMatchObject({ source: a, target: b, targetHandle: "l" });
     redo();
     expect(doc().edges[0]).toMatchObject({ source: a, target: c });
+  });
+
+  test("setDirection sets meta.direction; undo reverts", () => {
+    expect(doc().meta.direction).toBeUndefined();
+    setDirection("LR");
+    expect(doc().meta.direction).toBe("LR");
+    undo();
+    expect(doc().meta.direction).toBeUndefined();
   });
 
   test("canUndo / canRedo track the cursor", () => {
