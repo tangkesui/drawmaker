@@ -8,9 +8,11 @@ import {
   deleteNodes,
   duplicateSelection,
   getSelectionClip,
+  groupNodes,
   pasteClip,
   resizeNode,
   selectAll,
+  ungroupNodes,
   __resetIds,
 } from "../operations";
 import { createInitialState, useEditorStore } from "../store";
@@ -106,6 +108,33 @@ describe("clipboard / duplicate / select", () => {
     select([a]);
     duplicateSelection();
     expect(doc().nodes).toHaveLength(2);
+  });
+
+  test("groupNodes：建容器、子节点 parentId + 位置转相对；ungroup 还原绝对、删容器", () => {
+    const a = addNode("rect", { x: 100, y: 100 });
+    const b = addNode("rect", { x: 200, y: 140 });
+    const gid = groupNodes([a, b], { x: 80, y: 60, width: 200, height: 140 }, "后端");
+
+    const group = doc().nodes.find((n) => n.id === gid)!;
+    expect(group.kind).toBe("subgraph");
+    expect(group.position).toEqual({ x: 80, y: 60 });
+    expect(group.size).toEqual({ width: 200, height: 140 });
+    expect(doc().nodes.find((n) => n.id === a)!).toMatchObject({ parentId: gid, position: { x: 20, y: 40 } }); // 100-80,100-60
+    expect(doc().nodes.find((n) => n.id === b)!).toMatchObject({ parentId: gid, position: { x: 120, y: 80 } });
+    expect(selected()).toEqual([gid]);
+
+    ungroupNodes(gid);
+    expect(doc().nodes.find((n) => n.id === gid)).toBeUndefined(); // 容器删
+    expect(doc().nodes.find((n) => n.id === a)!).toMatchObject({ position: { x: 100, y: 100 } }); // 换回绝对
+    expect(doc().nodes.find((n) => n.id === a)!.parentId).toBeUndefined();
+  });
+
+  test("删容器连带删子树（避免孤儿 parentId）", () => {
+    const a = addNode("rect", { x: 0, y: 0 });
+    const b = addNode("rect", { x: 50, y: 0 });
+    const gid = groupNodes([a, b], { x: 0, y: 0, width: 100, height: 100 });
+    deleteNodes([gid]);
+    expect(doc().nodes).toHaveLength(0); // 容器 + a + b 全删
   });
 
   test("selectAll selects every node", () => {

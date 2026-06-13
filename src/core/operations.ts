@@ -13,6 +13,7 @@ import type {
 import type { Clip } from "./clipboard";
 import { commit } from "./history";
 import { useEditorStore } from "./store";
+import { absolutePos, nodeMap, SUBGRAPH_KIND, subtreeIds } from "./subgraph";
 
 /**
  * 领域操作 = `commit()` 的调用点。
@@ -130,10 +131,66 @@ export function altDragDuplicate(ends: { id: string; position: { x: number; y: n
 
 export function deleteNodes(ids: string[]): void {
   if (ids.length === 0) return;
-  const set = new Set(ids);
   commit("delete", (d) => {
+    // 删分组连带删其子树（避免孤儿 parentId）；普通节点 subtreeIds 只含自身。
+    const set = new Set<string>();
+    for (const id of ids) for (const sub of subtreeIds(id, d.nodes)) set.add(sub);
     d.nodes = d.nodes.filter((n) => !set.has(n.id));
     d.edges = d.edges.filter((e) => !set.has(e.source) && !set.has(e.target));
+  });
+}
+
+// ---- 分组（subgraph）----
+
+/**
+ * 编组：把（顶层）节点收进一个新 subgraph 容器。rect 是容器的绝对几何（含标题栏 + padding，由
+ * 调用方按 measured 尺寸算）；子节点 position 转相对容器。一条 command，选中新容器。返回容器 id。
+ */
+export function groupNodes(
+  childIds: string[],
+  rect: { x: number; y: number; width: number; height: number },
+  label = "组",
+): string {
+  const id = nextId("g");
+  const set = new Set(childIds);
+  commit("group", (d) => {
+    for (const n of d.nodes) {
+      if (set.has(n.id)) {
+        n.parentId = id;
+        n.position = { x: n.position.x - rect.x, y: n.position.y - rect.y };
+      }
+    }
+    d.nodes.push({
+      id,
+      kind: SUBGRAPH_KIND,
+      position: { x: rect.x, y: rect.y },
+      size: { width: rect.width, height: rect.height },
+      data: { label },
+    });
+  });
+  setSelected([id]);
+  return id;
+}
+
+/** 解组：保留子节点（位置换回绝对/或提升到组的父），删掉容器。一条 command。 */
+export function ungroupNodes(groupId: string): void {
+  commit("ungroup", (d) => {
+    const byId = nodeMap(d.nodes);
+    const group = byId.get(groupId);
+    if (!group || group.kind !== SUBGRAPH_KIND) return;
+    const gAbs = absolutePos(group, byId);
+    const up = group.parentId;
+    const upAbs = up ? absolutePos(byId.get(up)!, byId) : { x: 0, y: 0 };
+    for (const n of d.nodes) {
+      if (n.parentId === groupId) {
+        const absX = gAbs.x + n.position.x;
+        const absY = gAbs.y + n.position.y;
+        n.position = { x: absX - upAbs.x, y: absY - upAbs.y };
+        if (up) n.parentId = up;
+        else delete n.parentId;
+      }
+    }
+    d.nodes = d.nodes.filter((n) => n.id !== groupId);
   });
 }
 
