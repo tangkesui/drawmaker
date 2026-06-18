@@ -83,9 +83,9 @@
 ✅ **Phase 6**: 导出 — SVG / PNG / PDF（html-to-image 快照 + pdf-lib，全图 bounds）— 计划已归档 `docs/plan/archive/plan-2026-05-29-phase6-export.md`
 ✅ **Phase 7**: 打包（自用 $0）— `pnpm tauri build` 出 ad-hoc 签名 dmg（~3.4MB），README 含首次放行说明；公证留待将来分发 — 计划已归档 `docs/plan/archive/plan-2026-05-29-phase7-package.md`
 🔄 **Phase 8+**: 持续迭代 — elkjs 进阶布局、主题/暗色、模板、形状 resize、边样式等（见 Backlog）
-🔄 **Phase 9**: 连线能力 — 标签 / 箭头方向 / 端点重连（已完成）
-🔄 **Phase 11**: **成熟主力工具**（2026-06-13 规划）— 从「功能完整」到「成熟、可日常主力、可持续分发」。序列：subgraph 分组 → mermaid 覆盖收尾 → 编辑体验打磨 → 模板系统 → 暗色主题 → elkjs 进阶布局 → 自动更新 → (WASM 性能,投机/条件)。详见 `docs/plan/staging/staging-phase11-roadmap.md`。排除：AI 辅助、CRDT（仍在 Backlog）。
-🔄 **Phase 10**: **Mermaid 转型**（2026-06-13 /goal 立项）— 把 drawmaker 做成可视化操作 mermaid 的工具：随时导出 mermaid、标准 mermaid 模块可拖拽、零代码画几乎所有 mermaid 图。Phase A（flowchart 导出）✅、Phase B（标准形状库）核心✅、Phase C（零代码增强）：实时预览 + 方向切换 + **13 种图表类型零代码可画可导出**（graph 家族 7：flowchart/sequence/state/class/er/c4/mindmap 用画布；数据/时间家族 6：pie/gantt/timeline/journey/quadrant/xychart 用表格编辑器）。计划 `docs/plan/active/plan-2026-06-13-mermaid-pivot.md`
+✅ **Phase 9**: 连线能力 — 标签 / 箭头方向 / 端点重连（已完成）
+✅ **Phase 11**: **成熟主力工具**（2026-06-13 规划，已收官）— 从「功能完整」到「成熟、可日常主力、可持续分发」。可执行项全部落地：subgraph 分组 / 编辑体验 / 模板系统 / 暗色主题 / elkjs 正交布局，随 v0.4.0 发布。S2 quadrant/xychart 导入＝技术墙（11/13 上限）、S7 自动更新＝暂不做、S8 WASM＝延后。详见 `docs/plan/archive/staging-phase11-roadmap.md`。排除：AI 辅助、CRDT（仍在 Backlog）。
+✅ **Phase 10**: **Mermaid 转型**（2026-06-13 /goal 立项，核心完成）— 把 drawmaker 做成可视化操作 mermaid 的工具：随时导出 mermaid、标准 mermaid 模块可拖拽、零代码画几乎所有 mermaid 图。Phase A（flowchart 导出）✅、Phase B（标准形状库）核心✅、Phase C（零代码增强）：实时预览 + 方向切换 + **13 种图表类型零代码可画可导出**（graph 家族 7：flowchart/sequence/state/class/er/c4/mindmap 用画布；数据/时间家族 6：pie/gantt/timeline/journey/quadrant/xychart 用表格编辑器）+ **11/13 类型文本↔画布双向**。三大需求核心目标达成；长尾（alt 异形 / classDef / 极小众类型 / quadrant 导入）入 Backlog。计划已归档 `docs/plan/archive/plan-2026-06-13-mermaid-pivot.md`、`plan-2026-06-13-mermaid-bidirectional.md`、`plan-2026-06-13-subgraph.md`。
 
 ## Roadmap
 
@@ -101,7 +101,7 @@
 | 7 | 打包：dmg + macOS 签名 + 公证（notarization） | ✅（自用 $0：dmg + ad-hoc；公证留待分发） |
 | 8+ | 持续迭代：elkjs 进阶布局、主题、模板、暗色模式、AI 辅助等 | 🔄 |
 | 9 | 连线能力：标签 / 箭头方向 / 端点重连 | ✅ |
-| 10 | Mermaid 转型：导出 mermaid + 标准模块 + 零代码画 mermaid 图 | 🔄 A✅ B核心✅ C：13 类型可用 + 双向 11/13 |
+| 10 | Mermaid 转型：导出 mermaid + 标准模块 + 零代码画 mermaid 图 | ✅ 核心完成（13 类型可画可导出 + 双向 11/13；长尾入 Backlog）|
 | 11 | 成熟主力工具：subgraph / 收尾 / 体验 / 模板 / 暗色 / elkjs / 自动更新 / WASM | ✅ 可执行项全完成（S2 技术墙 / S7 暂不做 / S8 无瓶颈延后）|
 
 ## 关键指针
@@ -126,10 +126,21 @@
 - (P3) 暗色主题 — 用 CSS 变量实现
 - (P3) AI 辅助：自然语言生成架构图初稿
 - (P3) 协作模式：CRDT-based 多人编辑（远期）
-- (P1) **Mermaid 主线**（2026-06-13 /goal，见 Phase 10 + plan-2026-06-13-mermaid-pivot）：Phase C 长尾——实时 mermaid 预览面板、subgraph 分组、节点/边样式（虚线 -.-/粗线 ==/class/style）、图方向 UI 切换、导入 mermaid 文本反向建图、其他图表类型（sequence/class/state/ER/gantt…逐类推进）
+- **Mermaid 长尾**（2026-06-18 三份计划归档时梳理；用户定全部入 Backlog 维持现状。Phase 10/11 核心已完成发布，以下为非阻塞尾巴）：
+  - (P3) RW1 画布 ⌘V 自动嗅探外部文本是否 mermaid 并导入（已有 ⌘⇧V 显式入口；**决策点**：做不做 / 是否仅在无 `drawmaker/clip@1` magic 时探测，避免误吞普通文本）。改 `clipboard-actions`/`CanvasShortcuts`。
+  - (P3) RW2 新建节点 id 统一为 mermaid 语义 id（A/B/C 自增）。往返已稳定，纯导出可读性优化；改 `operations.nextId` 牵动 history/clipboard/序列化全链路，收益小风险有。**决策点**：值不值。
+  - (P3) RW3 quadrant/xychart 文本→画布导入。**已定为 mermaid API 技术墙，11/13 双向是上限**，导出仍可用。除非自写词法器，否则维持单向。
+  - (P3) RW4 alt 异形形状（parallelogram-alt / trapezoid-alt / double-circle / asymmetric）。canonical 10 形状已覆盖主流。
+  - (P3) RW5 调色板分类重组 / 形状预览微调（开放式 UI 打磨，**验收标准待用户定义**）。
+  - (P2) RW6 极小众/实验图表类型：gitgraph（命令式、与节点-连线不同构、需单独建模）/ requirement / sankey / block / kanban / architecture / radar / treemap。**新计划级范围**，做哪几个待决策。
+  - (P3) RW7 mermaid classDef / class 语义级节点分类往返（现仅 inline style）。改 `mermaid.ts`/`mermaid-import.ts`/`types.ts`。
+  - (P3) RW8 调色板拖出空 subgraph 容器作第三建组入口（现 ⌘G + 拖拽 reparent 双入口已够）。
+  - **决策点 · 架构形状归宿**：原 mermaid-pivot 续作想把 service/database/queue/loadbalancer/cloud/actor/note 归「扩展」分类重新可拖；后续「形状收敛」已把它们移出调色板进 `HIDDEN_KINDS`（仅渲染旧 .dm）。两条路互斥，**默认维持移除（纯 mermaid 收敛）**，待用户确认是否改回。
+  - 实施提醒：RW2/RW3/RW4/RW7 同改 `src/core/mermaid.ts`，若推进须**串行**，不可并行。
 
 ## 同步日志
 
+- 2026-06-18：**active 计划归档对齐（文档卫生）**。三份计划核心任务早已随 v0.3.0/v0.4.0 完成，但 checkbox 未更新、计划仍挂 active。用 workflow（3 分析 agent 逐项核到代码层 + 综合）确认后，把 `plan-2026-06-13-mermaid-bidirectional.md`、`plan-2026-06-13-mermaid-pivot.md`、`plan-2026-06-13-subgraph.md` 移到 archive（各加「归档后注」记完成状态 + 取舍 + 延后项）；staging-excalidraw「分组/容器」勾掉；blueprint Phase 9/10/11 标记对齐为 ✅、Roadmap 表同步、计划指针更新。梳理出的 8 项长尾（RW1–RW8）+ 决策点（架构形状归宿等）登记进 Backlog（用户定：全部维持现状，不动手）。注意 RW2/RW3/RW4/RW7 同改 `core/mermaid.ts`，若推进须串行。active 目录现已清空。
 - 2026-05-28：项目立项。原定 Tauri 2 + tldraw + macOS only。建立 docs 骨架，归档 drawio-desktop v30.0.4 package.json 作参照。
 - 2026-05-29：**渲染内核换型**。发现 tldraw v5 是 SDK License（非自由）、v2 是非商用许可、实际 ~165k LOC（不是宣传的 40k）。改用 xyflow / React Flow（MIT、~30k LOC、节点-连线模型契合架构图/流程图）。配套技术选型确定：Zustand（状态）、Command 模式（撤销栈）、dagre（自动布局）、react-hotkeys-hook（快捷键）。架构图入 blueprint。原 Phase 1 计划归档，新建 plan-2026-05-29-bootstrap-tauri-xyflow.md。
 - 2026-05-29：35 项核心概念补盲到 Notion 知识树（CS → 前端 / 通用基础 / 后端 / 框架 / 库 等多个分支，含 3 新 Branch + 30 新 Leaf）。

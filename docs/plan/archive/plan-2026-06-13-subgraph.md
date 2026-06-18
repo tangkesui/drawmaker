@@ -54,3 +54,9 @@ flowchart 支持分组容器：可把节点编成组、组可嵌套、可拖拽�
 ## 同步动作
 
 - 完成后归档；blueprint Phase 10 追加 subgraph；staging-excalidraw 的「分组/容器」勾掉。
+
+## 归档后注（2026-06-18）
+
+- **全部完成并发布**：V0/V1 去风险探针 + P1–P8 八阶段（创建/嵌套/拖进拖出/resize/复制/导出/导入双向 + 鲁棒性修复 alt 拖容器带子树）已随 **v0.4.0** 发布。见 blueprint「Phase 11 收官 S1」。checkbox 当时未逐项勾选，以 blueprint 同步日志为准。
+- **P4 取舍说明**：原计划「调色板拖『容器』形状」作为第二建组入口未单独实现；建组双入口改由 **⌘G 编组 + 拖拽节点进已有容器（reparent，`onNodeDragStop` 命中检测）** 达成，功能等价。若将来要「从调色板拖出空 subgraph 容器」作第三入口，已登记 blueprint Backlog（长尾 RW8）。
+- staging-excalidraw 的「分组 / 容器」已勾掉。

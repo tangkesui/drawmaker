@@ -51,3 +51,13 @@ mermaid 有十几种图表类型（flowchart / sequence / class / state / ER / g
 ## 同步动作
 
 - Phase A 完成后归档为 `plan-2026-06-13-mermaid-phase-a.md`（或在本文件勾掉 A 段、保留 B/C 续作），blueprint 加日志 + Backlog 登记 mermaid 主线
+
+## 归档后注（2026-06-18）
+
+- **三大需求核心目标全部达成并发布**（随 v0.3.0/v0.4.0）：Phase A 全 done；Phase B 核心 done；Phase C 的实时预览 + 方向切换 + **13 种类型零代码可画可导出** + 数据家族表格编辑器 + C4/mindmap 全 done。计划里仍标未勾的 **「边样式（虚线/粗线）」「subgraph 分组」「导入 mermaid 反向建图」实际均已落地**（见 blueprint 2026-06-13「Tier2 样式往返」「Phase 11 收官 S1 subgraph」「双向导入扩展」多条），checkbox 未及更新。
+- **续作 / 长尾全部入 Backlog（用户 2026-06-18 定：维持现状）**：
+  - Phase B 续作 alt 异形（parallelogram-alt / trapezoid-alt / double-circle / asymmetric，长尾 RW4）。
+  - 架构形状（service/database/queue/loadbalancer/cloud/actor/note）归宿：原设想归「扩展」分类重新可拖，**已被后续「形状收敛」实质取代**（移出调色板进 `HIDDEN_KINDS`，仅渲染旧 .dm）。默认维持移除（纯 mermaid 收敛路线），登记 Backlog 备查。
+  - 调色板分类重组 / 形状预览微调（验收未定义，长尾 RW5）。
+  - 极小众/实验类型 gitgraph（命令式，与节点-连线模型不同构需单独建模）/ requirement / sankey / block / kanban / architecture / radar / treemap（长尾 RW6）。
+  - mermaid classDef 语义级节点分类往返（现只做 inline style，长尾 RW7）。

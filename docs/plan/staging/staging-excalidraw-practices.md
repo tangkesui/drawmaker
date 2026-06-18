@@ -25,7 +25,7 @@ mermaid 原生支持，故可双向：
 - ~~**节点颜色/填充/描边** → mermaid `style id ...`~~ ✅ 已做（2026-06-13）：导出 `style id fill:..,stroke:..,stroke-width:..px`；导入读 `vertex.styles` 数组解析回 fill/stroke/strokeWidth。
 - ~~**边样式**虚线 `-.-` / 粗线 `==`~~ ✅ 已做：EdgeData.style（solid/dashed/thick）+ 属性面板「线型」下拉 + 渲染 dasharray/strokeWidth + 导出 `线型×方向` 9 操作符表（mermaid 实测全合法）+ 导入读 `edge.stroke`（normal/dotted/thick）。
 - **箭头种类** `--o` / `--x`（实心箭头已支持，圆/叉头待加）。
-- **分组 / 容器** → mermaid `subgraph`（≈ Excalidraw frame）。待做。
+- ~~**分组 / 容器** → mermaid `subgraph`（≈ Excalidraw frame）~~ ✅ 已做（2026-06-13，随 v0.4.0）：subgraph 分组含嵌套、⌘G 编组 + 拖拽 reparent 双入口、导出/导入双向。见 blueprint「Phase 11 收官 S1」。
 - **z-order / 锁定**：mermaid 无对应，本地存 .dm、导出丢弃（次要）。
 
 ## Tier 3 — 破坏往返的自由白板特性（默认不做 / 本地不导出）

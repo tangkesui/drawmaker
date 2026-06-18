@@ -52,3 +52,11 @@
 ## 同步动作
 
 - 完成后归档；blueprint 更新 Phase 10；舍弃的形状在 blueprint 记一笔
+
+## 归档后注（2026-06-18）
+
+- **核心全部完成并发布**：V0 / P1 / P2 / P3 主体（菜单 ⌘⇧V + MermaidPanel 可编辑面板「应用到画布」）/ P4 形状收敛 / P6（**11/13 类型文本↔画布双向**：graph 家族 7 + 数据家族 4）+ jsdom 集成测试 `mermaid-roundtrip.test.ts` / P7 验证打包，已随 **v0.3.0 里程碑 + v0.4.0** 发布。
+- **三个非阻塞尾巴入 Backlog（用户 2026-06-18 定：全部入 Backlog 维持现状）**：
+  - 画布 ⌘V 自动识别 mermaid 文本直接导入（已有 ⌘⇧V 显式入口覆盖，长尾 RW1）。
+  - P5 新建节点 id 统一为 mermaid 语义 id（导入/导出往返已稳定，纯导出可读性优化，长尾 RW2）。
+  - quadrant / xychart 文本→画布导入（**mermaid 官方解析器 API 技术墙**：getQuadrantData 返回已处理渲染数据难反推、xychart-beta 解析报词法错；**11/13 双向已是上限**，导出仍可用，长尾 RW3）。
