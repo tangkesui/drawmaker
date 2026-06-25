@@ -32,6 +32,22 @@ describe("serialize", () => {
     expect(() => deserializeDocument("{ not json")).toThrow();
   });
 
+  test("迁移：加载时把存量 label 里的字面 <br> 解码成换行（节点+边）", () => {
+    const old = JSON.stringify({
+      version: 1,
+      nodes: [
+        { id: "n_1", kind: "rect", position: { x: 0, y: 0 }, data: { label: "标题<br>副标题" } },
+        { id: "n_2", kind: "rect", position: { x: 0, y: 0 }, data: { label: "无换行" } },
+      ],
+      edges: [{ id: "e_1", source: "n_1", target: "n_2", data: { label: "第一行<br/>第二行" } }],
+      meta: { title: "t" },
+    });
+    const doc = deserializeDocument(old);
+    expect(doc.nodes[0].data.label).toBe("标题\n副标题");
+    expect(doc.nodes[1].data.label).toBe("无换行"); // 无 <br> 不动
+    expect(doc.edges[0].data?.label).toBe("第一行\n第二行");
+  });
+
   test("rejects unknown version", () => {
     const text = JSON.stringify({ ...sample, version: 99 });
     expect(() => deserializeDocument(text)).toThrow(/版本/);

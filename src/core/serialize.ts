@@ -1,6 +1,19 @@
+import { decodeLabel } from "./mermaid-import";
 import type { DmDocument } from "./types";
 
 export const SUPPORTED_VERSION = 1;
+
+/** 匹配 `<br>` / `<br/>` / `<br />`（与 decodeLabel 同源），仅作 guard 判断（非全局）。 */
+const BR_TAG = /<br\s*\/?\s*>/i;
+
+/** 迁移：把存量 label 里的字面 `<br>` 解码成换行（老文档导入时没解码；幂等，无 br 标签不动）。 */
+function migrateLabels<T extends { data?: { label?: string } }>(items: T[]): T[] {
+  return items.map((it) =>
+    it.data && typeof it.data.label === "string" && BR_TAG.test(it.data.label)
+      ? { ...it, data: { ...it.data, label: decodeLabel(it.data.label) } }
+      : it,
+  );
+}
 
 export function serializeDocument(doc: DmDocument): string {
   return JSON.stringify(doc, null, 2);
@@ -31,8 +44,8 @@ export function deserializeDocument(text: string): DmDocument {
 
   return {
     version: SUPPORTED_VERSION,
-    nodes: doc.nodes,
-    edges: doc.edges,
+    nodes: migrateLabels(doc.nodes),
+    edges: migrateLabels(doc.edges),
     meta: doc.meta ?? { title: "Untitled" },
     ...(doc.data ? { data: doc.data } : {}),
   };
