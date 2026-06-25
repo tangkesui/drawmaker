@@ -42,7 +42,8 @@ export function assignEdgeHandles(edges: DmEdge[], shapeIds: Set<string>, dir: L
 /** 纯函数：dagre 算每个节点的左上角坐标。节点尺寸取注册表 defaultSize。 */
 export function computeLayout(doc: DmDocument, dir: LayoutDir): Map<string, { x: number; y: number }> {
   const g = new dagre.graphlib.Graph();
-  g.setGraph({ rankdir: dir, nodesep: 50, ranksep: 60, marginx: 20, marginy: 20 });
+  // nodesep/ranksep 收紧，缓解宽扇出树的横向铺开（节点已按内容定尺，不会再挤）。
+  g.setGraph({ rankdir: dir, nodesep: 36, ranksep: 50, marginx: 20, marginy: 20 });
   g.setDefaultEdgeLabel(() => ({}));
 
   for (const n of doc.nodes) {
