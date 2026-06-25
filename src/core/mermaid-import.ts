@@ -6,7 +6,35 @@ import { SUBGRAPH_KIND } from "./subgraph";
  * mermaid 解析器把换行原样留作 `<br>` 交给它自己的 HTML 渲染器；我们内部统一用 `\n`
  * （shapes.css `white-space: pre-wrap` 渲染，导出时 mermaid.ts 再转回 `<br/>`）。
  */
-const decodeLabel = (s: string): string => s.replace(/<br\s*\/?\s*>/gi, "\n");
+export const decodeLabel = (s: string): string => s.replace(/<br\s*\/?\s*>/gi, "\n");
+
+/**
+ * 估算容纳 label（含换行）所需的盒子尺寸，导入时给「未定尺 + 矩形系」节点定尺，
+ * 避免折行文本溢出固定默认框。纯启发式：CJK/全角按 13px/字、其余按 ~8px/字估宽，
+ * 按「软换行后的可视行数」估高；结果不小于形状默认尺寸，宽度封顶后改走软换行。
+ * 注意：只保证「文本区≈外接矩形」的形状（rect/rounded/stadium/subroutine/note）容纳；
+ * 内接形状（圆/菱形…）需几何感知膨胀，调用方据 ShapeDef.fitsRectText 自行决定是否套用。
+ */
+export function labelSize(label: string, def: { width: number; height: number }): { width: number; height: number } {
+  const FONT = 13;
+  const LINE_H = 18;
+  const PAD_X = 16; // .shape-label 左右 padding 各 8
+  const PAD_Y = 12;
+  const MAX_W = 260; // 超宽单行不无限拉宽，改为软换行
+  const lineWidth = (s: string): number => {
+    let w = 0;
+    // CJK 统一表意 + 中日韩符号/标点 + 全角形式按整字宽算；其余（含大写密集 Latin）按 ~0.62em
+    for (const ch of s) w += /[⺀-鿿　-〿＀-￯]/.test(ch) ? FONT : FONT * 0.62;
+    return w;
+  };
+  const lines = label.split("\n");
+  const widest = lines.reduce((m, l) => Math.max(m, lineWidth(l)), 0);
+  const width = Math.min(MAX_W, Math.max(def.width, Math.ceil(widest) + PAD_X));
+  const innerW = Math.max(1, width - PAD_X);
+  const visualLines = lines.reduce((sum, l) => sum + Math.max(1, Math.ceil(lineWidth(l) / innerW)), 0);
+  const height = Math.max(def.height, visualLines * LINE_H + PAD_Y);
+  return { width, height };
+}
 
 /**
  * mermaid flowchart 原始解析结果 → 我们的节点/边（纯映射，可测）。

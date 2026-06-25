@@ -8,6 +8,7 @@ import {
   classToGraph,
   erToGraph,
   flowToGraph,
+  labelSize,
   mindmapToGraph,
   sequenceToGraph,
   stateToGraph,
@@ -88,15 +89,24 @@ export async function importMermaidFromText(text: string): Promise<ImportResult>
 
   // 忠实映射四个方向（TD→TB），dagre rankdir 原生支持，极性不再折叠。
   const dir: LayoutDir = graph.direction === "TD" ? "TB" : graph.direction;
-  const hasGroups = graph.nodes.some((n) => n.kind === SUBGRAPH_KIND);
+  // 给「未定尺 + 矩形系」的形状节点（flowchart/state 的 rect/rounded/stadium/subroutine 等）
+  // 按 label 内容定尺，避免折行文本溢出默认框；内接形状（圆/菱形…）几何盲会撑破轮廓，
+  // 故只对 fitsRectText 的形状定尺，其余沿用默认。已定尺的（class/er/sequence boxSize）
+  // 与容器（layoutWithGroups 算）保持原样。
+  const sizedNodes = graph.nodes.map((n) => {
+    if (n.kind === SUBGRAPH_KIND || n.size) return n;
+    const def = getShape(n.kind);
+    return def.fitsRectText ? { ...n, size: labelSize(n.data.label, def.defaultSize) } : n;
+  });
+  const hasGroups = sizedNodes.some((n) => n.kind === SUBGRAPH_KIND);
   // 按流向给边设连接桩（容器边除外），让 TD 从下出/上入、LR 从右出/左入等。
-  const shapeIds = new Set(graph.nodes.filter((n) => n.kind !== SUBGRAPH_KIND).map((n) => n.id));
+  const shapeIds = new Set(sizedNodes.filter((n) => n.kind !== SUBGRAPH_KIND).map((n) => n.id));
   const edges = assignEdgeHandles(graph.edges, shapeIds, dir);
 
   let nodes: DmNode[];
   if (hasGroups) {
     // 含分组：先 dagre 扁平布局叶子（忽略 parentId），再 layoutWithGroups 自底向上算容器框 + 转相对。
-    const leaves = graph.nodes.filter((n) => n.kind !== SUBGRAPH_KIND);
+    const leaves = sizedNodes.filter((n) => n.kind !== SUBGRAPH_KIND);
     const tmp: DmDocument = {
       version: 1,
       nodes: leaves.map((n) => ({ ...n, position: { x: 0, y: 0 }, parentId: undefined })),
@@ -104,13 +114,13 @@ export async function importMermaidFromText(text: string): Promise<ImportResult>
       meta: { title: "", direction: graph.direction },
     };
     const leafAbs = computeLayout(tmp, dir);
-    const sizeOf = new Map(graph.nodes.map((n) => [n.id, n]));
+    const sizeOf = new Map(sizedNodes.map((n) => [n.id, n]));
     const geom = layoutWithGroups(
-      graph.nodes as unknown as DmNode[],
+      sizedNodes as unknown as DmNode[],
       leafAbs,
       (id) => sizeOf.get(id)?.size ?? getShape(sizeOf.get(id)?.kind ?? "rect").defaultSize,
     );
-    nodes = graph.nodes.map((n) => {
+    nodes = sizedNodes.map((n) => {
       const g = geom.get(n.id)!;
       return { ...n, position: g.position, ...(g.size ? { size: g.size } : {}) };
     });
@@ -118,12 +128,12 @@ export async function importMermaidFromText(text: string): Promise<ImportResult>
     const prevPos = new Map(useEditorStore.getState().doc.nodes.map((n) => [n.id, n.position]));
     const tmp: DmDocument = {
       version: 1,
-      nodes: graph.nodes.map((n) => ({ ...n, position: { x: 0, y: 0 } })),
+      nodes: sizedNodes.map((n) => ({ ...n, position: { x: 0, y: 0 } })),
       edges: graph.edges,
       meta: { title: "", direction: graph.direction },
     };
     const layout = computeLayout(tmp, dir);
-    nodes = graph.nodes.map((n) => ({
+    nodes = sizedNodes.map((n) => ({
       ...n,
       position: prevPos.get(n.id) ?? layout.get(n.id) ?? { x: 0, y: 0 },
     }));

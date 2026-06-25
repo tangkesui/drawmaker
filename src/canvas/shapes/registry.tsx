@@ -12,6 +12,9 @@ export interface ShapeDef {
   category: string;
   defaultSize: { width: number; height: number };
   render: (w: number, h: number) => ReactNode;
+  /** 文本区≈外接矩形（矩形系），导入时可按 label 内容安全定尺而不溢出轮廓。
+   *  内接形状（圆/菱形/六边形…）不置位，沿用默认尺寸（几何感知定尺另行规划）。 */
+  fitsRectText?: boolean;
 }
 
 const SHAPES: ShapeDef[] = [
@@ -23,6 +26,7 @@ const SHAPES: ShapeDef[] = [
     label: "体育场",
     category: "Mermaid",
     defaultSize: { width: 140, height: 56 },
+    fitsRectText: true,
     render: (w, h) => <rect x={1} y={1} width={w - 2} height={h - 2} rx={(h - 2) / 2} />,
   },
   {
@@ -30,6 +34,7 @@ const SHAPES: ShapeDef[] = [
     label: "子程序",
     category: "Mermaid",
     defaultSize: { width: 150, height: 56 },
+    fitsRectText: true,
     render: (w, h) => (
       <>
         <rect x={1} y={1} width={w - 2} height={h - 2} rx={2} />
@@ -100,6 +105,7 @@ const SHAPES: ShapeDef[] = [
     label: "矩形",
     category: "通用",
     defaultSize: { width: 120, height: 56 },
+    fitsRectText: true,
     render: (w, h) => <rect x={1} y={1} width={w - 2} height={h - 2} rx={2} />,
   },
   {
@@ -107,6 +113,7 @@ const SHAPES: ShapeDef[] = [
     label: "圆角矩形",
     category: "通用",
     defaultSize: { width: 140, height: 56 },
+    fitsRectText: true,
     render: (w, h) => <rect x={1} y={1} width={w - 2} height={h - 2} rx={14} />,
   },
   {
@@ -225,6 +232,7 @@ const SHAPES: ShapeDef[] = [
     label: "便签",
     category: "架构",
     defaultSize: { width: 120, height: 90 },
+    fitsRectText: true,
     render: (w, h) => {
       const f = 16;
       return (

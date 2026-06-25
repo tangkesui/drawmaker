@@ -4,6 +4,7 @@ import {
   erToGraph,
   flowToGraph,
   c4ToGraph,
+  labelSize,
   mindmapToGraph,
   sequenceToGraph,
   stateToGraph,
@@ -13,6 +14,24 @@ import {
   type RawSequence,
   type RawState,
 } from "../mermaid-import";
+
+describe("labelSize（按 label 内容估算节点盒子，避免折行溢出）", () => {
+  const def = { width: 120, height: 56 };
+  test("短单行 → 不小于默认尺寸", () => {
+    expect(labelSize("A", def)).toEqual(def);
+  });
+  test("多行 → 高度随行数增长", () => {
+    const one = labelSize("一行", def);
+    const three = labelSize("一行\n二行\n三行", def);
+    expect(three.height).toBeGreaterThan(one.height);
+  });
+  test("长单行 → 加宽但封顶 260，超出转软换行加高", () => {
+    const s = labelSize("中".repeat(60), def); // 60×13≈780px，远超 260 封顶 → 软换行成多行
+    expect(s.width).toBeLessThanOrEqual(260);
+    expect(s.width).toBeGreaterThan(def.width);
+    expect(s.height).toBeGreaterThan(def.height); // 封顶后软换行 → 多行 → 加高
+  });
+});
 
 describe("flowToGraph（mermaid flowchart 解析 → 节点/边，纯映射）", () => {
   test("顶点 type→kind、边 source/target/label/arrow、方向 TB→TD", () => {
