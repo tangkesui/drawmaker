@@ -1,4 +1,4 @@
-import { computeLayout } from "../canvas/auto-layout";
+import { assignEdgeHandles, computeLayout, type LayoutDir } from "../canvas/auto-layout";
 import { getShape } from "../canvas/shapes/registry";
 import { viewport } from "../canvas/viewport-controls";
 import { commit } from "../core/history";
@@ -86,8 +86,12 @@ export async function importMermaidFromText(text: string): Promise<ImportResult>
   const { type, graph } = built;
   if (graph.nodes.length === 0) return { ok: false, msg: "没有解析到节点" };
 
-  const dir = graph.direction === "LR" || graph.direction === "RL" ? "LR" : "TB";
+  // 忠实映射四个方向（TD→TB），dagre rankdir 原生支持，极性不再折叠。
+  const dir: LayoutDir = graph.direction === "TD" ? "TB" : graph.direction;
   const hasGroups = graph.nodes.some((n) => n.kind === SUBGRAPH_KIND);
+  // 按流向给边设连接桩（容器边除外），让 TD 从下出/上入、LR 从右出/左入等。
+  const shapeIds = new Set(graph.nodes.filter((n) => n.kind !== SUBGRAPH_KIND).map((n) => n.id));
+  const edges = assignEdgeHandles(graph.edges, shapeIds, dir);
 
   let nodes: DmNode[];
   if (hasGroups) {
@@ -127,7 +131,7 @@ export async function importMermaidFromText(text: string): Promise<ImportResult>
 
   commit("import mermaid", (d) => {
     d.nodes = nodes;
-    d.edges = graph.edges;
+    d.edges = edges;
     d.meta.diagramType = type;
     d.meta.direction = graph.direction;
   });

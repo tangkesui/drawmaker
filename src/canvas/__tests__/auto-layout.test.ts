@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { computeLayout } from "../auto-layout";
-import type { DmDocument } from "../../core/types";
+import { assignEdgeHandles, computeLayout, handlesForDir } from "../auto-layout";
+import type { DmDocument, DmEdge } from "../../core/types";
 
 const doc: DmDocument = {
   version: 1,
@@ -33,5 +33,34 @@ describe("auto-layout (dagre)", () => {
     const pos = computeLayout(doc, "LR");
     expect(pos.get("a")!.x).toBeLessThan(pos.get("b")!.x);
     expect(pos.get("b")!.x).toBeLessThan(pos.get("c")!.x);
+  });
+
+  test("BT/RL 原生反向（极性不再折叠）", () => {
+    const bt = computeLayout(doc, "BT");
+    expect(bt.get("a")!.y).toBeGreaterThan(bt.get("b")!.y); // a 在下、c 在上
+    const rl = computeLayout(doc, "RL");
+    expect(rl.get("a")!.x).toBeGreaterThan(rl.get("b")!.x);
+  });
+});
+
+describe("方向 → 连接桩（TD 从下出/上入 等）", () => {
+  test("handlesForDir 四向映射", () => {
+    expect(handlesForDir("TB")).toEqual({ source: "b", target: "t" });
+    expect(handlesForDir("BT")).toEqual({ source: "t", target: "b" });
+    expect(handlesForDir("LR")).toEqual({ source: "r", target: "l" });
+    expect(handlesForDir("RL")).toEqual({ source: "l", target: "r" });
+  });
+
+  test("assignEdgeHandles：普通边按方向设桩，容器边保持原样", () => {
+    const edges: DmEdge[] = [
+      { id: "e1", source: "a", target: "b" }, // 两端普通形状
+      { id: "e2", source: "a", target: "g1" }, // 指向容器，无桩可设
+    ];
+    const shapeIds = new Set(["a", "b"]); // g1 是 subgraph，不在内
+    const out = assignEdgeHandles(edges, shapeIds, "TB");
+    expect(out[0]).toMatchObject({ sourceHandle: "b", targetHandle: "t" });
+    expect(out[1].sourceHandle).toBeUndefined();
+    expect(out[1].targetHandle).toBeUndefined();
+    expect(edges[0].sourceHandle).toBeUndefined(); // 纯函数，不改入参
   });
 });
