@@ -92,7 +92,9 @@
   font-size: 12px;
   line-height: 1.5;
   color: #e2e8f0;
-  white-space: pre;
+  /* 长 label 行（带 <br/> 的节点定义很长）软换行，避免横向溢出把节点 id 挤出视野 */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   user-select: text;
 }
 
@@ -103,7 +105,8 @@
   background: #1e293b;
   border: none;
   resize: none;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   tab-size: 2;
 }
 
