@@ -108,6 +108,18 @@ describe("flowToGraph（mermaid flowchart 解析 → 节点/边，纯映射）",
       data: { label: "A", fill: "#f9f", stroke: "#333", strokeWidth: 2 },
     });
   });
+
+  test("label 里的 <br> 变体（节点/容器/边）→ 真正换行（与导出 \\n→<br/> 往返）", () => {
+    const raw: RawFlow = {
+      vertices: { A: { id: "A", text: "slide.pptx<br>ZIP 包<br/>~28MB" } },
+      edges: [{ start: "A", end: "A", type: "arrow_point", text: "第一行<BR />第二行" }],
+      subGraphs: [{ id: "g1", nodes: ["A"], title: "外壳<br />管道层" }],
+    };
+    const byId = Object.fromEntries(flowToGraph(raw).nodes.map((n) => [n.id, n]));
+    expect(byId.A.data.label).toBe("slide.pptx\nZIP 包\n~28MB");
+    expect(byId.g1.data.label).toBe("外壳\n管道层");
+    expect(flowToGraph(raw).edges[0].data).toEqual({ label: "第一行\n第二行" });
+  });
 });
 
 describe("stateToGraph / classToGraph / erToGraph（其余 graph 类型导入映射）", () => {

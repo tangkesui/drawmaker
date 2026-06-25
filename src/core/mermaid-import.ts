@@ -2,6 +2,13 @@ import type { DmEdge, DmNode, EdgeArrow, EdgeStyle, FlowDirection } from "./type
 import { SUBGRAPH_KIND } from "./subgraph";
 
 /**
+ * mermaid label 里的 `<br>` / `<br/>` / `<br />`（任意大小写、含空格）→ 真正换行。
+ * mermaid 解析器把换行原样留作 `<br>` 交给它自己的 HTML 渲染器；我们内部统一用 `\n`
+ * （shapes.css `white-space: pre-wrap` 渲染，导出时 mermaid.ts 再转回 `<br/>`）。
+ */
+const decodeLabel = (s: string): string => s.replace(/<br\s*\/?\s*>/gi, "\n");
+
+/**
  * mermaid flowchart 原始解析结果 → 我们的节点/边（纯映射，可测）。
  *
  * 原始数据形态来自 mermaid 官方解析器 `db.getVertices()/getEdges()/getDirection()`
@@ -118,7 +125,7 @@ export function flowToGraph(raw: RawFlow): ImportGraph {
   const nodes: Omit<DmNode, "position">[] = Object.values(raw.vertices).map((v) => ({
     id: v.id,
     kind: SHAPE_KIND[v.type ?? ""] ?? "rect",
-    data: { label: v.text ?? v.id, ...parseStyles(v.styles) },
+    data: { label: decodeLabel(v.text ?? v.id), ...parseStyles(v.styles) },
     ...(parentOf.has(v.id) ? { parentId: parentOf.get(v.id) } : {}),
   }));
   // 容器节点（无 position/size，由导入动作 layoutWithGroups 填）
@@ -126,7 +133,7 @@ export function flowToGraph(raw: RawFlow): ImportGraph {
     nodes.push({
       id: sg.id,
       kind: SUBGRAPH_KIND,
-      data: { label: sg.title ?? sg.id },
+      data: { label: decodeLabel(sg.title ?? sg.id) },
       ...(parentOf.has(sg.id) ? { parentId: parentOf.get(sg.id) } : {}),
     });
   }
@@ -134,7 +141,7 @@ export function flowToGraph(raw: RawFlow): ImportGraph {
     const arrow = EDGE_ARROW[e.type ?? ""] ?? "end";
     const style = EDGE_STYLE[e.stroke ?? ""] ?? "solid";
     const data = {
-      ...(e.text ? { label: e.text } : {}),
+      ...(e.text ? { label: decodeLabel(e.text) } : {}),
       ...(arrow !== "end" ? { arrow } : {}),
       ...(style !== "solid" ? { style } : {}),
     };
