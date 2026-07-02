@@ -9,7 +9,7 @@ import { initMenu } from "./services/menuService";
 import { showError } from "./services/notify";
 import { initCloseGuard } from "./services/windowService";
 import { PropertiesPanel } from "./ui/PropertiesPanel";
-import { CanvasShortcuts } from "./ui/CanvasShortcuts";
+import { CanvasShortcuts, isEditable } from "./ui/CanvasShortcuts";
 import { MermaidPanel } from "./ui/MermaidPanel";
 import { ShapePalette } from "./ui/ShapePalette";
 import { TitleSync } from "./ui/TitleSync";
@@ -68,6 +68,16 @@ export default function App() {
   );
 }
 
+/**
+ * 点画布时把焦点从输入框里解放出来：xyflow 的 pane/节点在 mousedown 上 preventDefault，
+ * 浏览器不会自动 blur 已聚焦的输入框（如 Mermaid 面板），此后所有快捷键都被焦点 guard
+ * 判成"文字编辑"而失灵。这里在捕获阶段主动 blur（点中的目标本身可编辑时不动）。
+ */
+function escapeEditableFocus(e: React.PointerEvent) {
+  const active = document.activeElement;
+  if (!isEditable(e.target) && isEditable(active)) (active as HTMLElement).blur();
+}
+
 /** 工作区：graph 家族用节点-连线画布；数据/时间家族用表格编辑器。 */
 function Workspace() {
   const diagramType = useEditorStore((s) => s.doc.meta.diagramType ?? "flowchart");
@@ -76,7 +86,7 @@ function Workspace() {
   return (
     <div className="workspace">
       {!dataMode && <ShapePalette />}
-      <main className="canvas-area">
+      <main className="canvas-area" onPointerDownCapture={escapeEditableFocus}>
         {dataMode ? <DataEditor type={diagramType as DataDiagramType} /> : <Canvas />}
       </main>
       {!dataMode && <PropertiesPanel />}

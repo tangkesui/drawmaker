@@ -23,6 +23,7 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import { useEditorStore } from "../core/store";
+import { copySelection, cutSelection, pasteClipboard } from "../core/clipboard-actions";
 import {
   addNode,
   altDragDuplicate,
@@ -44,7 +45,10 @@ import { registerGroupControls } from "./group-controls";
 import { setAutoEdit } from "./auto-edit";
 import "./context-menu.css";
 
-type ContextMenuState = { x: number; y: number; kind: "node" } | { x: number; y: number; kind: "edge"; edgeId: string };
+type ContextMenuState =
+  | { x: number; y: number; kind: "node" }
+  | { x: number; y: number; kind: "edge"; edgeId: string }
+  | { x: number; y: number; kind: "pane" };
 import { registerExportSource } from "./export";
 import { registerPlacement } from "./placement";
 import { allShapes, getShape } from "./shapes/registry";
@@ -361,6 +365,20 @@ function CanvasInner() {
     setContextMenu({ x: e.clientX, y: e.clientY, kind: "edge", edgeId: edge.id });
   }, []);
 
+  const onPaneContextMenu = useCallback((e: React.MouseEvent | MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, kind: "pane" });
+  }, []);
+
+  /** 右键菜单里的系统剪贴板动作（异步，吞掉偶发 IO 异常，与 CanvasShortcuts 同策略）。 */
+  const fireClip = useCallback(
+    (p: Promise<unknown>) => {
+      void p.catch(() => {});
+      closeMenu();
+    },
+    [closeMenu],
+  );
+
   return (
     <>
       <ReactFlow
@@ -387,6 +405,7 @@ function CanvasInner() {
         onEdgeDoubleClick={onEdgeDoubleClick}
         onNodeContextMenu={onNodeContextMenu}
         onEdgeContextMenu={onEdgeContextMenu}
+        onPaneContextMenu={onPaneContextMenu}
         fitView
         proOptions={{ hideAttribution: true }}
       >
@@ -407,8 +426,12 @@ function CanvasInner() {
             }}
           />
           <div className="ctx-menu" style={{ left: contextMenu.x, top: contextMenu.y }}>
-            {contextMenu.kind === "node" ? (
+            {contextMenu.kind === "pane" ? (
+              <button onClick={() => fireClip(pasteClipboard())}>粘贴 ⌘V</button>
+            ) : contextMenu.kind === "node" ? (
               <>
+                <button onClick={() => fireClip(cutSelection())}>剪切 ⌘X</button>
+                <button onClick={() => fireClip(copySelection())}>复制 ⌘C</button>
                 <button
                   onClick={() => {
                     duplicateSelection();
